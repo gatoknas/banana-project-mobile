@@ -19,8 +19,6 @@ A cutting-edge Android application that transforms voice-inputted shopping lists
 
 ![Final App Design](./screenshots/final_app_design.png)
 
-*Upload your image to `./screenshots/final_app_design.png` to display here.*
-
 ## 🛠️ Tech Stack
 
 - **Language**: Kotlin
