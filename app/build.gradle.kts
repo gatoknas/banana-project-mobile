@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.runtime)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.compose.material3.window.size.class1)
     kapt(libs.hilt.compiler)
 
     // Add this line for hiltViewModel()

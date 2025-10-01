@@ -2,8 +2,6 @@ package org.banana.project.services
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import org.banana.project.model.ParserResponse
 import org.banana.project.services.Interfaces.ISpeechParser
 
@@ -64,8 +62,8 @@ private object SpanishNumberParser {
         return text.trim().toIntOrNull()?: SpanishNumberParser.parseWords(text.trim())
     }
 
-   /**
- * (NUEVA FUNCIÓN MEJORADA) Parsea una cadena de lista de compras con nombres de artículo compuestos.
+/**
+ * Parsea una cadena de lista de compras con nombres de artículo compuestos.
  * Es capaz de manejar entradas como "veinticinco salpicones con helado cuarenta galletas de chocolate".
  *
  * @param input La cadena de entrada con formato de lenguaje natural.
@@ -117,27 +115,4 @@ fun parseShoppingListToJson_MultiWordItems(input: String): String {
 }
 
 
-    fun parseShoppingListToJson_TypeSafe(input: String): String {
-        if (input.isBlank()) return "{}"
-
-        val itemRegex = Regex("\\s*,\\s*|\\s+y\\s+")
-        val partsRegex = Regex("""^(.+?)\s+([a-zA-Záéíóúñ]+)$""")
-
-        val resultMap = mutableMapOf<String, Int>()
-
-        input.split(itemRegex).forEach { chunk ->
-            val trimmedChunk = chunk.trim()
-            if (trimmedChunk.isNotEmpty()) {
-                partsRegex.find(trimmedChunk)?.let { matchResult ->
-                    val (quantityStr, itemName) = matchResult.destructured
-                    parseNumber(quantityStr)?.let { numericValue ->
-                        resultMap[itemName] = numericValue
-                    }
-                }
-            }
-        }
-
-        // Serialización automática y segura de un Map<String, Int>
-        return Json.encodeToString(resultMap)
-    }
 }
