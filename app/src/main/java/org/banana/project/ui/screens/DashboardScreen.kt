@@ -1,5 +1,6 @@
 package org.banana.project.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -42,10 +43,10 @@ fun DashboardScreen(
     Column(
         modifier = Modifier.Companion
             .fillMaxSize()
-            .padding(WindowInsets.Companion.statusBars.asPaddingValues())
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.SpaceEvenly
+        verticalArrangement = Arrangement.SpaceEvenly,
+
     ) {
         when {
             isExpanded -> {
