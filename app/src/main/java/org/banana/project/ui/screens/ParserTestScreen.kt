@@ -25,13 +25,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import org.banana.project.R
 import org.banana.project.presentation.ParserTestViewModel
 import org.banana.project.ui.components.RetroCard
 
 @Composable
-fun ParserTestScreen(viewModel: ParserTestViewModel = viewModel()) {
+fun ParserTestScreen(viewModel: ParserTestViewModel = hiltViewModel()) {
     var inputText by remember { mutableStateOf("") }
     val result by viewModel.result.collectAsState()
     var isListening by remember { mutableStateOf(false) }

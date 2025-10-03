@@ -16,7 +16,9 @@ import org.banana.project.ui.theme.TechniColors
 @Composable
 fun HeaderMenu(
     onDashboardClick: () -> Unit,
-    onInputDashboardClick: () -> Unit
+    onLlmTestClick: () -> Unit,
+    onParserTestClick: () -> Unit,
+    onPromptClick: () -> Unit
 ){
     Row(
         modifier = Modifier
@@ -28,18 +30,36 @@ fun HeaderMenu(
             modifier = Modifier
                 .padding(10.dp)
                 .clickable { onDashboardClick() }, // Make it clickable
-            text = "Tablero",
+            text = "Dashboard",
             color = TechniColors.Cream,
-            fontSize = 30.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
         )
         Text(
             modifier = Modifier
                 .padding(10.dp)
-                .clickable { onInputDashboardClick() }, // Make it clickable
-            text = "Compras",
+                .clickable { onLlmTestClick() }, // Make it clickable
+            text = "LLM Test",
             color = TechniColors.Cream,
-            fontSize = 30.sp,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            modifier = Modifier
+                .padding(10.dp)
+                .clickable { onParserTestClick() }, // Make it clickable
+            text = "Parser Test",
+            color = TechniColors.Cream,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            modifier = Modifier
+                .padding(10.dp)
+                .clickable { onPromptClick() }, // Make it clickable
+            text = "Prompt",
+            color = TechniColors.Cream,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
         )
     }
