@@ -18,7 +18,9 @@ import org.banana.project.ui.theme.TechniColors
 @Composable
 fun RetroHeader(
     onDashboardClick: () -> Unit,
-    onInputDashboardClick: () -> Unit
+    onLlmTestClick: () -> Unit,
+    onParserTestClick: () -> Unit,
+    onPromptClick: () -> Unit
 ){
     RetroCard(
         backgroundColor = TechniColors.Crimson,
@@ -37,7 +39,7 @@ fun RetroHeader(
                 fontSize = 50.sp,
                 fontWeight = FontWeight.Bold,
             )
-            HeaderMenu(onDashboardClick, onInputDashboardClick)
+            HeaderMenu(onDashboardClick, onLlmTestClick, onParserTestClick, onPromptClick)
         }
     }
 }
@@ -45,5 +47,5 @@ fun RetroHeader(
 @Preview
 @Composable
 fun RetroHeaderPreview(){
-    RetroHeader(onDashboardClick = {}, onInputDashboardClick = {})
+    RetroHeader(onDashboardClick = {}, onLlmTestClick = {}, onParserTestClick = {}, onPromptClick = {})
 }
