@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.hilt.android.plugin)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.sqldelight)
     }
 
 android {
@@ -41,11 +42,27 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // Explicitly configure JVM arguments for Kotlin tasks, including kapt
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        kotlinOptions.jvmTarget = "17"
+    }
+
 }
-// Add this block
+// SQLDelight configuration
+sqldelight {
+    databases {
+        create("BananaDatabase") {
+            packageName.set("org.banana.project.data.database")
+            schemaOutputDirectory.set(file("src/main/sqldelight/databases"))
+        }
+    }
+}
+
 kotlin {
     jvmToolchain(17)
 }
@@ -86,6 +103,10 @@ dependencies {
 
     // Voyager Navigation
     implementation(libs.voyager.navigator)
+
+    // SQLDelight database
+    implementation(libs.sqldelight.android.driver)
+    implementation(libs.sqldelight.coroutines.extensions)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -1,0 +1,64 @@
+CREATE TABLE Product (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    price REAL NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE Sell (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    total REAL NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE SellItem (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sell_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    price REAL NOT NULL,
+    FOREIGN KEY (sell_id) REFERENCES Sell(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES Product(id) ON DELETE CASCADE
+);
+
+-- Queries for Product
+selectAllProducts:
+SELECT * FROM Product ORDER BY created_at DESC;
+
+selectProductById:
+SELECT * FROM Product WHERE id = ?;
+
+insertProduct:
+INSERT INTO Product(name, description, price, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?);
+
+updateProduct:
+UPDATE Product SET name = ?, description = ?, price = ?, updated_at = ? WHERE id = ?;
+
+deleteProduct:
+DELETE FROM Product WHERE id = ?;
+
+-- Queries for Sell
+selectAllSells:
+SELECT * FROM Sell ORDER BY created_at DESC;
+
+selectSellById:
+SELECT * FROM Sell WHERE id = ?;
+
+insertSell:
+INSERT INTO Sell(total, created_at) VALUES (?, ?);
+
+-- Queries for SellItem
+selectSellItemsBySellId:
+SELECT * FROM SellItem WHERE sell_id = ?;
+
+insertSellItem:
+INSERT INTO SellItem(sell_id, product_id, quantity, price) VALUES (?, ?, ?, ?);
+
+deleteSellItemsBySellId:
+DELETE FROM SellItem WHERE sell_id = ?;
+
+deleteSell:
+DELETE FROM Sell WHERE id = ?;

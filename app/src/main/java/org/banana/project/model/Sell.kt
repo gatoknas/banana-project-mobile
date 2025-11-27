@@ -26,4 +26,17 @@ data class Sell(
     val items: List<SellItem>,
     val totalAmount: Double,
     val dateTime: Instant
-)
+) {
+    /**
+     * Calculates the total amount by summing the quantity of each SellItem multiplied by the product's sell price.
+     *
+     * @param products The list of available products to look up prices.
+     * @return The calculated total amount.
+     */
+    fun calculateTotalAmount(products: List<Product>): Double {
+        return items.sumOf { item ->
+            val product = products.find { it.id == item.productId }
+            item.quantity * (product?.sellPrice ?: 0.0)
+        }
+    }
+}

@@ -22,10 +22,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import dagger.hilt.android.AndroidEntryPoint
+import org.banana.project.navigation.CreateProductScreen
 import org.banana.project.navigation.DashboardScreen
-import org.banana.project.navigation.LlmTestScreen
 import org.banana.project.navigation.ParserTestScreen
-import org.banana.project.navigation.PromptScreen
 import org.banana.project.services.Interfaces.ILlmService
 import org.banana.project.services.Interfaces.ISpeechParser
 import org.banana.project.ui.components.RetroHeader
@@ -75,9 +74,8 @@ class MainActivity : ComponentActivity() {
                                         )
                                     )
                                 },
-                                onLlmTestClick = { navigator.replaceAll(LlmTestScreen(llmService)) },
                                 onParserTestClick = { navigator.replaceAll(ParserTestScreen) },
-                                onPromptClick = { navigator.replaceAll(PromptScreen) }
+                                onCreateProductClick = { navigator.replaceAll(CreateProductScreen(windowSizeClass)) }
                             )
                             CurrentScreen()
                         }

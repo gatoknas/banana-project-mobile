@@ -1,3 +1,4 @@
+
 package org.banana.project.ui.components
 
 import androidx.compose.foundation.clickable
@@ -16,9 +17,8 @@ import org.banana.project.ui.theme.TechniColors
 @Composable
 fun HeaderMenu(
     onDashboardClick: () -> Unit,
-    onLlmTestClick: () -> Unit,
     onParserTestClick: () -> Unit,
-    onPromptClick: () -> Unit
+    onCreateProductClick: () -> Unit
 ){
     Row(
         modifier = Modifier
@@ -38,15 +38,6 @@ fun HeaderMenu(
         Text(
             modifier = Modifier
                 .padding(10.dp)
-                .clickable { onLlmTestClick() }, // Make it clickable
-            text = "LLM Test",
-            color = TechniColors.Cream,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            modifier = Modifier
-                .padding(10.dp)
                 .clickable { onParserTestClick() }, // Make it clickable
             text = "Parser Test",
             color = TechniColors.Cream,
@@ -56,8 +47,8 @@ fun HeaderMenu(
         Text(
             modifier = Modifier
                 .padding(10.dp)
-                .clickable { onPromptClick() }, // Make it clickable
-            text = "Prompt",
+                .clickable { onCreateProductClick() }, // Make it clickable
+            text = "Create Product",
             color = TechniColors.Cream,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
