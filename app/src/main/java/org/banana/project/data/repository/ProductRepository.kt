@@ -80,6 +80,13 @@ class ProductRepository(private val database: BananaDatabase) {
     }
 
     /**
+     * Get all products synchronously.
+     */
+    suspend fun getAllSync(): List<Product> {
+        return database.productQueries.selectAllProducts().executeAsList().map { it.toDomain() }
+    }
+
+    /**
      * Get products by category.
      */
     fun getByCategory(category: String): Flow<List<Product>> {

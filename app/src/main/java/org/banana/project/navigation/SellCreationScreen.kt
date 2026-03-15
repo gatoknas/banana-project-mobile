@@ -62,7 +62,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.fillMaxWidth
 import org.banana.project.ui.components.RetroCard
-import org.banana.project.utils.ParsedItem
+import org.banana.project.model.ParsedSellItem
+import java.text.NumberFormat
+import java.util.Locale
 
 class SellCreationScreen() : Screen {
 
@@ -72,7 +74,7 @@ class SellCreationScreen() : Screen {
         val parsedItems by viewModel.parsedItems.collectAsState()
         
         val context = LocalContext.current
-        var recognizedText by remember { mutableStateOf("Press and hold the microphone to speak") }
+        var recognizedText by remember { mutableStateOf("Presione y mantenga el micrófono para hablar") }
         var isRecording by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         var hasPermission by remember { mutableStateOf(false) }
@@ -293,7 +295,7 @@ fun MicrophoneAndStatus(
 }
 
 @Composable
-fun ParsedResultsTable(items: List<ParsedItem>) {
+fun ParsedResultsTable(items: List<ParsedSellItem>) {
     RetroCard(
         backgroundColor = MaterialTheme.colorScheme.onPrimary,
         modifier = Modifier.fillMaxWidth()
@@ -310,9 +312,10 @@ fun ParsedResultsTable(items: List<ParsedItem>) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "#", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.15f), textAlign = TextAlign.Center)
-                Text(text = "Cantidad", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.25f), textAlign = TextAlign.Center)
-                Text(text = "Producto", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.6f), textAlign = TextAlign.Center)
+                Text(text = "#", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.1f), textAlign = TextAlign.Center)
+                Text(text = "Cantidad", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.2f), textAlign = TextAlign.Center)
+                Text(text = "Producto", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.4f), textAlign = TextAlign.Center)
+                Text(text = "Precio", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center)
             }
             
             androidx.compose.material3.HorizontalDivider(
@@ -334,21 +337,34 @@ fun ParsedResultsTable(items: List<ParsedItem>) {
                         Text(
                             text = "${index + 1}.",
                             fontSize = 18.sp,
-                            modifier = Modifier.weight(0.15f),
+                            modifier = Modifier.weight(0.1f),
                             textAlign = TextAlign.Center
                         )
                         Text(
                             text = "${item.quantity}",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
-                            modifier = Modifier.weight(0.25f),
+                            modifier = Modifier.weight(0.2f),
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = item.name,
+                            text = item.parsedName,
                             fontSize = 18.sp,
-                            modifier = Modifier.weight(0.6f),
+                            modifier = Modifier.weight(0.4f),
                             textAlign = TextAlign.Center
+                        )
+                        
+                        val priceText = item.matchedProduct?.sellPrice?.let {
+                            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
+                            format.format(it)
+                        } ?: "N/A"
+                        
+                        Text(
+                            text = priceText,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(0.3f),
+                            textAlign = TextAlign.Center,
+                            color = if (item.matchedProduct == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     
@@ -357,6 +373,45 @@ fun ParsedResultsTable(items: List<ParsedItem>) {
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
                             thickness = 1.dp
                         )
+                    }
+                }
+                
+                if (items.isNotEmpty()) {
+                    item {
+                        val total = items.sumOf { (it.matchedProduct?.sellPrice ?: 0.0) * it.quantity }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        androidx.compose.material3.HorizontalDivider(
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            thickness = 2.dp
+                        )
+                        
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Total:",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(0.7f),
+                                textAlign = TextAlign.End
+                            )
+                            
+                            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
+                            Text(
+                                text = format.format(total),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.weight(0.3f),
+                                textAlign = TextAlign.Center,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
