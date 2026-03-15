@@ -474,7 +474,7 @@ fun MicrophoneButton(
                 modifier = Modifier
                     .size(ripple2Size)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = idleAlpha))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = idleAlpha))
             )
         }
 
