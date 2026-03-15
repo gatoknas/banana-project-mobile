@@ -1,21 +1,23 @@
 package org.banana.project.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Brightness4
+import androidx.compose.material.icons.filled.BrightnessHigh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -27,70 +29,93 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.banana.project.ui.components.RetroCard
-import org.banana.project.ui.theme.TechniColors
 
-val cardHeight = 500.dp
-val cardWidth = 450.dp
+val cardHeight = 250.dp
+val cardWidth = 350.dp
 
 @Composable
 fun DashboardScreen(
-    windowSizeClass: WindowSizeClass
+    windowSizeClass: WindowSizeClass,
+    isTokyoNight: Boolean = false,
+    onThemeToggle: () -> Unit = {}
 ){
     val isExpanded = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
     val isMedium = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Medium
-    val isCompact = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val surface = MaterialTheme.colorScheme.surface
+    val outline = MaterialTheme.colorScheme.outline
 
     Column(
-        modifier = Modifier.Companion
+        modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.SpaceEvenly,
-
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        when {
-            isExpanded -> {
-                DashboardFlowRow(
-                    cardColor1 = TechniColors.Crimson,
-                    cardColor2 = TechniColors.Emerald,
-                    cardColor3 = TechniColors.LessGolden,
-                    cardColor4 = TechniColors.Emerald,
-                    cardColor5 = TechniColors.Guayaba
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = onThemeToggle) {
+                Icon(
+                    imageVector = if (isTokyoNight) Icons.Default.Brightness4 else Icons.Default.BrightnessHigh,
+                    contentDescription = "Toggle Theme",
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
+        }
 
-            isMedium -> {
-
+        when {
+            isExpanded || isMedium -> {
                 DashboardFlowRow(
-                    cardColor1 = TechniColors.Crimson,
-                    cardColor2 = TechniColors.Emerald,
-                    cardColor3 = TechniColors.LessGolden,
-                    cardColor4 = TechniColors.Emerald,
-                    cardColor5 = TechniColors.Guayaba
+                    cardColor1 = primary,
+                    cardColor2 = secondary,
+                    cardColor3 = tertiary,
+                    cardColor4 = surface,
+                    cardColor5 = outline
                 )
-
             }
 
             else -> {
                 // Stack all columns vertically for compact screens
                 Column(
-                    modifier = Modifier.Companion
-                        .fillMaxWidth()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    DashboardColumn(
-                        cardColor2 = TechniColors.skyBlue,
-                        cardColor1 = TechniColors.Crimson
+                    DashboardCard(
+                        title = "TOTAL REVENUE",
+                        value = "$1,000,000",
+                        backgroundColor = primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
-                    Spacer(Modifier.Companion.height(10.dp))
-                    DashboardColumn(
-                        cardColor1 = TechniColors.Guayaba,
-                        cardColor2 = TechniColors.LessGolden
+                    DashboardCard(
+                        title = "ACTIVE USERS",
+                        value = "1,234",
+                        backgroundColor = secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
                     )
-                    Spacer(Modifier.Companion.height(10.dp))
-                    DashboardColumn(cardColor1 = Color(0xff016a4d), cardColor2 = Color(0xff2da5fa))
+                    DashboardCard(
+                        title = "NEW ORDERS",
+                        value = "56",
+                        backgroundColor = tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary
+                    )
+                    DashboardCard(
+                        title = "PENDING TASKS",
+                        value = "12",
+                        backgroundColor = surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                    DashboardCard(
+                        title = "ALERTS",
+                        value = "3",
+                        backgroundColor = outline,
+                        contentColor = MaterialTheme.colorScheme.onBackground
+                    )
                 }
             }
         }
@@ -98,69 +123,35 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashboardColumn(
-    cardColor1: Color,
-    cardColor2: Color
+private fun DashboardCard(
+    title: String,
+    value: String,
+    backgroundColor: Color,
+    contentColor: Color
 ) {
-    Column(
-        modifier = Modifier.Companion
-            .fillMaxHeight(),
-        verticalArrangement = Arrangement.SpaceEvenly,
-        horizontalAlignment = Alignment.Companion.CenterHorizontally
+    RetroCard(
+        modifier = Modifier
+            .width(cardWidth)
+            .height(cardHeight),
+        backgroundColor = backgroundColor
     ) {
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(0.6f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor1
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "TOTAL REVENUE",
-                    fontSize = 35.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = TechniColors.GoldenTitle
-                )
-                Spacer(Modifier.Companion.height(18.dp))
-                Text(
-                    "$1,000,000",
-                    fontSize = 60.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = TechniColors.Cream
-                )
-            }
-        }
-
-        Spacer(Modifier.Companion.width(5.dp).weight(0.05f))
-
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(1f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor2
-        ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "Retro Card Title",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = Color.Companion.White
-                )
-                Spacer(Modifier.Companion.height(8.dp))
-                Text(
-                    "A cool retro styled component.",
-                    fontSize = 14.sp,
-                    color = Color.Companion.LightGray
-                )
-            }
+            Text(
+                title,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
+            Spacer(Modifier.height(18.dp))
+            Text(
+                value,
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
         }
     }
 }
@@ -174,142 +165,43 @@ private fun DashboardFlowRow(
     cardColor5: Color,
 ) {
     FlowRow(
-        modifier = Modifier.Companion
-            .fillMaxHeight(),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Companion.CenterVertically)
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(0.6f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor1
-        ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "TOTAL REVENUE",
-                    fontSize = 35.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = TechniColors.GoldenTitle
-                )
-                Spacer(Modifier.Companion.height(18.dp))
-                Text(
-                    "$1,000,000",
-                    fontSize = 60.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = TechniColors.Cream
-                )
-            }
-        }
+        DashboardCard(
+            title = "TOTAL REVENUE",
+            value = "$1,000,000",
+            backgroundColor = cardColor1,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
 
-        Spacer(Modifier.Companion.width(5.dp).weight(0.05f))
+        DashboardCard(
+            title = "ACTIVE USERS",
+            value = "1,234",
+            backgroundColor = cardColor2,
+            contentColor = MaterialTheme.colorScheme.onSecondary
+        )
 
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(1f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor2
-        ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "Retro Card Title",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = Color.Companion.White
-                )
-                Spacer(Modifier.Companion.height(8.dp))
-            }
-        }
+        DashboardCard(
+            title = "NEW ORDERS",
+            value = "56",
+            backgroundColor = cardColor3,
+            contentColor = MaterialTheme.colorScheme.onTertiary
+        )
 
-        Spacer(Modifier.Companion.width(5.dp).weight(0.05f))
+        DashboardCard(
+            title = "PENDING TASKS",
+            value = "12",
+            backgroundColor = cardColor4,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
 
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(1f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor3
-        ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "Retro Card Title",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = Color.Companion.White
-                )
-                Spacer(Modifier.Companion.height(8.dp))
-                Text(
-                    "A cool retro styled component.",
-                    fontSize = 14.sp,
-                    color = Color.Companion.LightGray
-                )
-            }
-        }
-
-        Spacer(Modifier.Companion.width(5.dp).weight(0.05f))
-
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(1f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor4
-        ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "Retro Card Title",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = Color.Companion.White
-                )
-                Spacer(Modifier.Companion.height(8.dp))
-                Text(
-                    "A cool retro styled component.",
-                    fontSize = 14.sp,
-                    color = Color.Companion.LightGray
-                )
-            }
-        }
-
-        Spacer(Modifier.Companion.width(5.dp).weight(0.05f))
-
-        RetroCard(
-            modifier = Modifier.Companion
-                .weight(1f)
-                .width(cardWidth)
-                .height(cardHeight),
-            backgroundColor = cardColor5
-        ) {
-            Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    "Retro Card Title",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Companion.Bold,
-                    color = Color.Companion.White
-                )
-                Spacer(Modifier.Companion.height(8.dp))
-                Text(
-                    "A cool retro styled component.",
-                    fontSize = 14.sp,
-                    color = Color.Companion.LightGray
-                )
-            }
-        }
+        DashboardCard(
+            title = "ALERTS",
+            value = "3",
+            backgroundColor = cardColor5,
+            contentColor = MaterialTheme.colorScheme.onBackground
+        )
     }
 }

@@ -1,6 +1,7 @@
 package org.banana.project
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -10,27 +11,31 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import org.banana.project.data.DatabaseSeeder
+import org.banana.project.navigation.CreateProductScreen
 import org.banana.project.navigation.DashboardScreen
-import org.banana.project.navigation.LlmTestScreen
-import org.banana.project.navigation.ParserTestScreen
-import org.banana.project.navigation.PromptScreen
-import org.banana.project.services.Interfaces.ILlmService
-import org.banana.project.services.Interfaces.ISpeechParser
+import org.banana.project.navigation.SellCreationScreen
 import org.banana.project.ui.components.RetroHeader
 import org.banana.project.ui.theme.BananaProjectTheme
-import org.banana.project.ui.theme.TechniColors
+import org.banana.project.ui.theme.ThemeMode
 import javax.inject.Inject
 
 @ExperimentalMaterial3WindowSizeClassApi
@@ -38,14 +43,18 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var speechParser: ISpeechParser
+    lateinit var databaseSeeder: DatabaseSeeder
 
-    @Inject
-    lateinit var llmService: ILlmService
-
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch {
+            try {
+                databaseSeeder.seed()
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error seeding database", e)
+            }
+        }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -55,14 +64,23 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
-            BananaProjectTheme {
+            var currentTheme by remember { mutableStateOf(ThemeMode.LIGHT) }
+
+            BananaProjectTheme(themeMode = currentTheme) {
                 Surface(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    Navigator(screen = DashboardScreen(windowSizeClass)) { navigator ->
+                    Navigator(screen = DashboardScreen(
+                        windowSizeClass = windowSizeClass,
+                        isTokyoNight = currentTheme == ThemeMode.TOKYO_NIGHT,
+                        onThemeToggle = {
+                            currentTheme = if (currentTheme == ThemeMode.LIGHT) ThemeMode.DARK else ThemeMode.LIGHT
+                        }
+                    )) { navigator ->
                         Column(
                             modifier = Modifier
-                                .background(color = TechniColors.skyBlue)
+                                .background(color = MaterialTheme.colorScheme.background)
                                 .fillMaxSize()
                                 .padding(WindowInsets.systemBars.asPaddingValues())
                                 .padding(16.dp)
@@ -71,13 +89,20 @@ class MainActivity : ComponentActivity() {
                                 onDashboardClick = {
                                     navigator.replaceAll(
                                         DashboardScreen(
-                                            windowSizeClass
+                                            windowSizeClass = windowSizeClass,
+                                            isTokyoNight = currentTheme == ThemeMode.TOKYO_NIGHT,
+                                            onThemeToggle = {
+                                                currentTheme = if (currentTheme == ThemeMode.LIGHT) ThemeMode.DARK else ThemeMode.LIGHT
+                                            }
                                         )
                                     )
                                 },
-                                onLlmTestClick = { navigator.replaceAll(LlmTestScreen(llmService)) },
-                                onParserTestClick = { navigator.replaceAll(ParserTestScreen) },
-                                onPromptClick = { navigator.replaceAll(PromptScreen) }
+                                onCreateProductClick = {
+                                    navigator.replaceAll(CreateProductScreen(windowSizeClass))
+                                },
+                                onSellCreationClick = {
+                                    navigator.push(SellCreationScreen())
+                                }
                             )
                             CurrentScreen()
                         }
