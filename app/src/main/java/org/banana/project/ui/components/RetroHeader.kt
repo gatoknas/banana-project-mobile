@@ -34,7 +34,7 @@ fun RetroHeader(
             ) {
             Text(
                 modifier = Modifier.padding(20.dp),
-                text = "DASHBOARD",
+                text = "AYURAMI",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 50.sp,
                 fontWeight = FontWeight.Bold,

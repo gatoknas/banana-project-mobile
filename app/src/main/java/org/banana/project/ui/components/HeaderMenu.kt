@@ -29,8 +29,8 @@ fun HeaderMenu(
         Text(
             modifier = Modifier
                 .padding(10.dp)
-                .clickable { onDashboardClick() }, // Make it clickable
-            text = "Dashboard",
+                .clickable { onSellCreationClick() }, // Make it clickable
+            text = "Crear Venta",
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
@@ -39,7 +39,7 @@ fun HeaderMenu(
             modifier = Modifier
                 .padding(10.dp)
                 .clickable { onCreateProductClick() }, // Make it clickable
-            text = "Create Product",
+            text = "Administrar Productos",
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
@@ -47,8 +47,8 @@ fun HeaderMenu(
         Text(
             modifier = Modifier
                 .padding(10.dp)
-                .clickable { onSellCreationClick() }, // Make it clickable
-            text = "Sell Creation",
+                .clickable { onDashboardClick() }, // Make it clickable
+            text = "Indicadores",
             color = MaterialTheme.colorScheme.onPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,

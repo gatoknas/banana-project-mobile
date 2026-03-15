@@ -71,13 +71,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Navigator(screen = DashboardScreen(
-                        windowSizeClass = windowSizeClass,
-                        isTokyoNight = currentTheme == ThemeMode.TOKYO_NIGHT,
-                        onThemeToggle = {
-                            currentTheme = if (currentTheme == ThemeMode.LIGHT) ThemeMode.DARK else ThemeMode.LIGHT
-                        }
-                    )) { navigator ->
+                    Navigator(screen = SellCreationScreen()) { navigator ->
                         Column(
                             modifier = Modifier
                                 .background(color = MaterialTheme.colorScheme.background)
