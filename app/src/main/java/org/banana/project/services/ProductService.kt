@@ -3,6 +3,7 @@ package org.banana.project.services
 import kotlinx.coroutines.flow.Flow
 import org.banana.project.data.UnitOfWork
 import org.banana.project.model.Product
+import org.banana.project.data.repository.ProductRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,7 +13,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class ProductService @Inject constructor(
-    private val unitOfWork: UnitOfWork
+    private val unitOfWork: UnitOfWork,
+    private val productRepository: ProductRepository
 ) {
 
     /**
@@ -38,7 +40,7 @@ class ProductService @Inject constructor(
             if (product.id == 0L) {
                 throw IllegalArgumentException("Product ID cannot be 0 for update")
             }
-            // Implementation would call repository
+            productRepository.update(product)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -53,8 +55,7 @@ class ProductService @Inject constructor(
             if (productId <= 0) {
                 throw IllegalArgumentException("Invalid product ID")
             }
-            // Check if product is used in any sells before deletion
-            // Implementation would call repository
+            productRepository.deleteById(productId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -69,8 +70,8 @@ class ProductService @Inject constructor(
             if (productId <= 0) {
                 throw IllegalArgumentException("Invalid product ID")
             }
-            // Implementation would call repository
-            Result.success(null) // Placeholder
+            val product = productRepository.getById(productId)
+            Result.success(product)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -80,24 +81,21 @@ class ProductService @Inject constructor(
      * Get all products.
      */
     fun getAllProducts(): Flow<List<Product>> {
-        // Implementation would return repository flow
-        TODO("Not yet implemented")
+        return productRepository.getAll()
     }
 
     /**
      * Search products by name.
      */
     fun searchProducts(query: String): Flow<List<Product>> {
-        // Implementation would return repository flow
-        TODO("Not yet implemented")
+        return productRepository.searchByName(query)
     }
 
     /**
      * Get products by category.
      */
     fun getProductsByCategory(category: String): Flow<List<Product>> {
-        // Implementation would return repository flow
-        TODO("Not yet implemented")
+        return productRepository.getByCategory(category)
     }
 
     /**
@@ -118,10 +116,9 @@ class ProductService @Inject constructor(
      */
     private fun validateProduct(product: Product) {
         require(product.name.isNotBlank()) { "Product name cannot be blank" }
-        require(product.category.isNotBlank()) { "Product category cannot be blank" }
         require(product.sellPrice >= 0) { "Sell price cannot be negative" }
+        // Computed properties validation if needed
         require(product.cost >= 0) { "Cost cannot be negative" }
-        require(product.supplier.isNotBlank()) { "Supplier cannot be blank" }
         require(product.sellPrice >= product.cost) { "Sell price must be greater than or equal to cost" }
     }
 }

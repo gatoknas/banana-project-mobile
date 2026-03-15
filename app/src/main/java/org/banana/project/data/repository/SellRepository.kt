@@ -21,30 +21,38 @@ class SellRepository(private val database: BananaDatabase) {
             sell.totalAmount,
             sell.dateTime.toString()
         )
-        return database.productQueries.selectAllSells().executeAsList().last().id
+        return database.productQueries.lastInsertRowId().executeAsOne()
     }
 
     /**
      * Insert a sell with its items.
      */
     suspend fun insertSellWithItems(sell: Sell, items: List<SellItem>): Long {
-        val sellId = insert(sell)
-        items.forEach { item ->
-            database.productQueries.insertSellItem(
-                sellId,
-                item.productId,
-                item.quantity.toLong(),
-                sell.totalAmount / items.size.toDouble() // Distribute total price
+        return database.productQueries.transactionWithResult {
+            database.productQueries.insertSell(
+                sell.totalAmount,
+                sell.dateTime.toString()
             )
+            val sellId = database.productQueries.lastInsertRowId().executeAsOne()
+            
+            items.forEach { item ->
+                database.productQueries.insertSellItem(
+                    sellId,
+                    item.productId,
+                    item.quantity.toLong(),
+                    // In a real app, you'd probably fetch the price from the Product table
+                    sell.totalAmount / items.size // Placeholder for price per item
+                )
+            }
+            sellId
         }
-        return sellId
     }
 
     /**
      * Update an existing sell.
      */
     suspend fun update(sell: Sell) {
-        // SQLDelight doesn't have update for sells, implement if needed
+        // Implement if needed
     }
 
     /**
@@ -65,8 +73,10 @@ class SellRepository(private val database: BananaDatabase) {
      * Delete a sell with all its items.
      */
     suspend fun deleteSellWithItems(sellId: Long) {
-        database.productQueries.deleteSellItemsBySellId(sellId)
-        database.productQueries.deleteSell(sellId)
+        database.productQueries.transaction {
+            database.productQueries.deleteSellItemsBySellId(sellId)
+            database.productQueries.deleteSell(sellId)
+        }
     }
 
     /**
@@ -111,7 +121,6 @@ class SellRepository(private val database: BananaDatabase) {
      * Get sells by date range.
      */
     fun getSellsByDateRange(startDate: Instant, endDate: Instant): Flow<List<Sell>> {
-        // Note: SQLDelight doesn't have date range queries, filtering in memory
         return getAll().map { sells ->
             sells.filter { it.dateTime.isAfter(startDate) && it.dateTime.isBefore(endDate) }
         }
@@ -121,15 +130,17 @@ class SellRepository(private val database: BananaDatabase) {
      * Get total amount by date range.
      */
     suspend fun getTotalAmountByDateRange(startDate: Instant, endDate: Instant): Double {
-        // For now, return 0.0 - implement proper aggregation later
-        return 0.0
+        return database.productQueries.getTotalAmountByDateRange(
+            startDate.toString(),
+            endDate.toString()
+        ).executeAsOne().SUM ?: 0.0
     }
 
     /**
      * Get the total count of sells.
      */
     suspend fun getCount(): Int {
-        return database.productQueries.selectAllSells().executeAsList().size
+        return database.productQueries.selectAllSells().executeAsList().size.toInt()
     }
 
     /**

@@ -21,12 +21,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.banana.project.presentation.CreateProductViewModel
 import org.banana.project.ui.components.RetroCard
-import org.banana.project.ui.theme.TechniColors
 
 @Composable
 fun CreateProductScreen(
@@ -50,7 +49,8 @@ fun CreateProductScreen(
     ) {
         RetroCard(
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = TechniColors.Crimson
+            backgroundColor = MaterialTheme.colorScheme.primary,
+            borderColor = MaterialTheme.colorScheme.secondary
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -59,14 +59,14 @@ fun CreateProductScreen(
                 Text(
                     text = "CREATE NEW PRODUCT",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = TechniColors.Cream
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
 
                 // Name field
                 OutlinedTextField(
                     value = name,
                     onValueChange = viewModel::updateName,
-                    label = { Text("Product Name", color = TechniColors.Cream) },
+                    label = { Text("Product Name", color = MaterialTheme.colorScheme.onPrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -75,7 +75,7 @@ fun CreateProductScreen(
                 OutlinedTextField(
                     value = description,
                     onValueChange = viewModel::updateDescription,
-                    label = { Text("Description", color = TechniColors.Cream) },
+                    label = { Text("Description", color = MaterialTheme.colorScheme.onPrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -84,7 +84,7 @@ fun CreateProductScreen(
                 OutlinedTextField(
                     value = sellPrice,
                     onValueChange = viewModel::updateSellPrice,
-                    label = { Text("Sell Price", color = TechniColors.Cream) },
+                    label = { Text("Sell Price", color = MaterialTheme.colorScheme.onPrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
@@ -94,7 +94,7 @@ fun CreateProductScreen(
                 errorMessage?.let {
                     Text(
                         text = it,
-                        color = TechniColors.Guayaba,
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -103,7 +103,7 @@ fun CreateProductScreen(
                 successMessage?.let {
                     Text(
                         text = it,
-                        color = TechniColors.Emerald,
+                        color = MaterialTheme.colorScheme.tertiary,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -117,18 +117,19 @@ fun CreateProductScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = TechniColors.Emerald
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary
                     ),
                     enabled = !isLoading
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = TechniColors.Cream,
+                            color = MaterialTheme.colorScheme.onTertiary,
                             modifier = Modifier.padding(end = 8.dp)
                         )
-                        Text("Creating...", color = TechniColors.Cream)
+                        Text("Creating...", color = MaterialTheme.colorScheme.onTertiary)
                     } else {
-                        Text("Create Product", color = TechniColors.Cream)
+                        Text("Create Product", color = MaterialTheme.colorScheme.onTertiary)
                     }
                 }
             }

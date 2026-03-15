@@ -5,10 +5,18 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.voyager.core.screen.Screen
 import org.banana.project.ui.screens.DashboardScreen as DashboardComposable
 
-class DashboardScreen(private val windowSizeClass: WindowSizeClass) : Screen {
+class DashboardScreen(
+    private val windowSizeClass: WindowSizeClass,
+    private val isTokyoNight: Boolean = false,
+    private val onThemeToggle: () -> Unit = {}
+) : Screen {
 
     @Composable
     override fun Content() {
-        DashboardComposable(windowSizeClass = windowSizeClass)
+        DashboardComposable(
+            windowSizeClass = windowSizeClass,
+            isTokyoNight = isTokyoNight,
+            onThemeToggle = onThemeToggle
+        )
     }
 }

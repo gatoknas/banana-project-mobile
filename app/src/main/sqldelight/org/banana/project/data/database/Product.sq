@@ -40,6 +40,9 @@ UPDATE Product SET name = ?, description = ?, price = ?, updated_at = ? WHERE id
 deleteProduct:
 DELETE FROM Product WHERE id = ?;
 
+lastInsertRowId:
+SELECT last_insert_rowid();
+
 -- Queries for Sell
 selectAllSells:
 SELECT * FROM Sell ORDER BY created_at DESC;
@@ -49,6 +52,9 @@ SELECT * FROM Sell WHERE id = ?;
 
 insertSell:
 INSERT INTO Sell(total, created_at) VALUES (?, ?);
+
+getTotalAmountByDateRange:
+SELECT SUM(total) FROM Sell WHERE created_at >= ? AND created_at <= ?;
 
 -- Queries for SellItem
 selectSellItemsBySellId:

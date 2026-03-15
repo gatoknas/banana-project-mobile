@@ -58,8 +58,11 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideProductService(unitOfWork: UnitOfWork): ProductService {
-        return ProductService(unitOfWork)
+    fun provideProductService(
+        unitOfWork: UnitOfWork,
+        productRepository: ProductRepository
+    ): ProductService {
+        return ProductService(unitOfWork, productRepository)
     }
 
     @Provides

@@ -1,5 +1,8 @@
 package org.banana.project.data.repository
 
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.banana.project.data.database.BananaDatabase
@@ -22,7 +25,7 @@ class ProductRepository(private val database: BananaDatabase) {
             product.createdAt.toString(),
             product.updatedAt.toString()
         )
-        return database.productQueries.selectAllProducts().executeAsList().last().id
+        return database.productQueries.lastInsertRowId().executeAsOne()
     }
 
     /**
@@ -70,17 +73,17 @@ class ProductRepository(private val database: BananaDatabase) {
      * Get all products as a Flow.
      */
     fun getAll(): Flow<List<Product>> {
-        return kotlinx.coroutines.flow.flow {
-            val entities = database.productQueries.selectAllProducts().executeAsList()
-            emit(entities.map { it.toDomain() })
-        }
+        return database.productQueries.selectAllProducts()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { entities -> entities.map { it.toDomain() } }
     }
 
     /**
      * Get products by category.
      */
     fun getByCategory(category: String): Flow<List<Product>> {
-        // Note: SQLDelight doesn't have category field, filtering in memory for now
+        // Note: SQLDelight doesn't have category field in current schema, filtering in memory
         return getAll().map { products ->
             products.filter { it.category == category }
         }
@@ -90,7 +93,7 @@ class ProductRepository(private val database: BananaDatabase) {
      * Search products by name.
      */
     fun searchByName(searchQuery: String): Flow<List<Product>> {
-        // Note: SQLDelight doesn't have search query, filtering in memory for now
+        // Note: SQLDelight doesn't have search query in current schema, filtering in memory
         return getAll().map { products ->
             products.filter { it.name.contains(searchQuery, ignoreCase = true) }
         }
