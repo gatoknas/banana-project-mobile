@@ -1,7 +1,6 @@
 package org.banana.project
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -36,6 +35,7 @@ import org.banana.project.navigation.SellCreationScreen
 import org.banana.project.ui.components.RetroHeader
 import org.banana.project.ui.theme.BananaProjectTheme
 import org.banana.project.ui.theme.ThemeMode
+import org.banana.project.utils.AppLogger
 import javax.inject.Inject
 
 @ExperimentalMaterial3WindowSizeClassApi
@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
             try {
                 databaseSeeder.seed()
             } catch (e: Exception) {
-                Log.e("MainActivity", "Error seeding database", e)
+                AppLogger.e("Error executing database seeder: ${e.message}")
             }
         }
 
