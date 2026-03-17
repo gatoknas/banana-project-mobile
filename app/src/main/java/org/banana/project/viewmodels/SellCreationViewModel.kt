@@ -36,6 +36,10 @@ class SellCreationViewModel @Inject constructor(
         }
     }
     
+    fun removeItem(item: ParsedSellItem) {
+        _parsedItems.value = _parsedItems.value.filter { it != item }
+    }
+    
     fun clearItems() {
         _parsedItems.value = emptyList()
     }
