@@ -36,6 +36,17 @@ class SellCreationViewModel @Inject constructor(
         }
     }
     
+    fun removeItem(item: ParsedSellItem) {
+        _parsedItems.value = _parsedItems.value.filter { it != item }
+    }
+    
+    fun updateItemQuantity(item: ParsedSellItem, newQuantity: Int) {
+        val clampedQuantity = newQuantity.coerceAtLeast(1)
+        _parsedItems.value = _parsedItems.value.map {
+            if (it == item) it.copy(quantity = clampedQuantity) else it
+        }
+    }
+    
     fun clearItems() {
         _parsedItems.value = emptyList()
     }

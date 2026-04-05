@@ -61,6 +61,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.fillMaxWidth
+import org.banana.project.ui.components.MicrophoneAndStatus
+import org.banana.project.ui.components.ParsedResultsTable
 import org.banana.project.ui.components.RetroCard
 import org.banana.project.model.ParsedSellItem
 import java.text.NumberFormat
@@ -198,7 +200,11 @@ class SellCreationScreen() : Screen {
                 // Right Column: Table
                 if (parsedItems.isNotEmpty()) {
                     Box(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                        ParsedResultsTable(items = parsedItems)
+                        ParsedResultsTable(
+                            items = parsedItems,
+                            onItemRemoved = { viewModel.removeItem(it) },
+                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) }
+                        )
                     }
                 }
             }
@@ -249,7 +255,11 @@ class SellCreationScreen() : Screen {
                 if (parsedItems.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(24.dp))
                     Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                        ParsedResultsTable(items = parsedItems)
+                        ParsedResultsTable(
+                            items = parsedItems,
+                            onItemRemoved = { viewModel.removeItem(it) },
+                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) }
+                        )
                     }
                 }
             }
@@ -257,249 +267,4 @@ class SellCreationScreen() : Screen {
     }
 }
 
-@Composable
-fun MicrophoneAndStatus(
-    isRecording: Boolean,
-    hasPermission: Boolean,
-    recognizedText: String,
-    errorMessage: String?,
-    onPressStart: () -> Unit,
-    onPressEnd: () -> Unit
-) {
-    MicrophoneButton(
-        isRecording = isRecording,
-        onPressStart = onPressStart,
-        onPressEnd = onPressEnd
-    )
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    Text(
-        text = recognizedText,
-        color = MaterialTheme.colorScheme.onBackground,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.padding(horizontal = 16.dp)
-    )
-
-    if (errorMessage != null) {
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = errorMessage,
-            color = MaterialTheme.colorScheme.error,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun ParsedResultsTable(items: List<ParsedSellItem>) {
-    RetroCard(
-        backgroundColor = MaterialTheme.colorScheme.onPrimary,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Table Header
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "#", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.1f), textAlign = TextAlign.Center)
-                Text(text = "Cantidad", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.2f), textAlign = TextAlign.Center)
-                Text(text = "Producto", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.4f), textAlign = TextAlign.Center)
-                Text(text = "Precio", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center)
-            }
-            
-            androidx.compose.material3.HorizontalDivider(
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                thickness = 1.dp
-            )
-
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                itemsIndexed(items) { index, item ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "${index + 1}.",
-                            fontSize = 18.sp,
-                            modifier = Modifier.weight(0.1f),
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "${item.quantity}",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.weight(0.2f),
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = item.parsedName,
-                            fontSize = 18.sp,
-                            modifier = Modifier.weight(0.4f),
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        val priceText = item.matchedProduct?.sellPrice?.let {
-                            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
-                            format.format(it)
-                        } ?: "N/A"
-                        
-                        Text(
-                            text = priceText,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(0.3f),
-                            textAlign = TextAlign.Center,
-                            color = if (item.matchedProduct == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    
-                    if (index < items.size - 1) {
-                        androidx.compose.material3.HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
-                            thickness = 1.dp
-                        )
-                    }
-                }
-                
-                if (items.isNotEmpty()) {
-                    item {
-                        val total = items.sumOf { (it.matchedProduct?.sellPrice ?: 0.0) * it.quantity }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        androidx.compose.material3.HorizontalDivider(
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            thickness = 2.dp
-                        )
-                        
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Total:",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.weight(0.7f),
-                                textAlign = TextAlign.End
-                            )
-                            
-                            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
-                            Text(
-                                text = format.format(total),
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                modifier = Modifier.weight(0.3f),
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-@Composable
-fun MicrophoneButton(
-    isRecording: Boolean,
-    onPressStart: () -> Unit,
-    onPressEnd: () -> Unit
-) {
-    val configuration = LocalConfiguration.current
-    val baseSize = (configuration.screenHeightDp * 0.3f).dp
-    val ripple1Size = baseSize * 1.5f
-    val ripple2Size = baseSize * 1.2f
-
-    val infiniteTransition = rememberInfiniteTransition(label = "mic_animation")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = if (isRecording) 1.2f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "mic_scale"
-    )
-
-    val idleAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.4f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "idle_alpha"
-    )
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.size(ripple1Size)
-    ) {
-        if (isRecording) {
-            Box(
-                modifier = Modifier
-                    .size(ripple1Size)
-                    .scale(scale)
-                    .clip(CircleShape)
-                    .background(Color.Red.copy(alpha = 0.3f))
-            )
-            Box(
-                modifier = Modifier
-                    .size(ripple2Size)
-                    .scale(scale * 1.1f)
-                    .clip(CircleShape)
-                    .background(Color.Red.copy(alpha = 0.5f))
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(ripple2Size)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = idleAlpha))
-            )
-        }
-
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(baseSize)
-                .clip(CircleShape)
-                .background(if (isRecording) Color.Red else MaterialTheme.colorScheme.surface)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onPress = {
-                            onPressStart()
-                            tryAwaitRelease()
-                            onPressEnd()
-                        }
-                    )
-                }
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.retro_microphone),
-                contentDescription = "Microphone",
-                modifier = Modifier.size(baseSize * 0.6f)
-            )
-        }
-    }
-}
 
