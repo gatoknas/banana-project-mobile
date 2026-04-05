@@ -202,7 +202,8 @@ class SellCreationScreen() : Screen {
                     Box(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                         ParsedResultsTable(
                             items = parsedItems,
-                            onItemRemoved = { viewModel.removeItem(it) }
+                            onItemRemoved = { viewModel.removeItem(it) },
+                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) }
                         )
                     }
                 }
@@ -256,7 +257,8 @@ class SellCreationScreen() : Screen {
                     Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                         ParsedResultsTable(
                             items = parsedItems,
-                            onItemRemoved = { viewModel.removeItem(it) }
+                            onItemRemoved = { viewModel.removeItem(it) },
+                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) }
                         )
                     }
                 }
