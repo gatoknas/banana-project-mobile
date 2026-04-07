@@ -40,8 +40,7 @@ class SellRepository(private val database: BananaDatabase) {
                     sellId,
                     item.productId,
                     item.quantity.toLong(),
-                    // In a real app, you'd probably fetch the price from the Product table
-                    sell.totalAmount / items.size // Placeholder for price per item
+                    item.unitPrice * item.quantity
                 )
             }
             sellId
