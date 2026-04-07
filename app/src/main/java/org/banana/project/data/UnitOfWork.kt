@@ -28,11 +28,8 @@ class UnitOfWork(
             }
         }
 
-        // Calculate total amount
-        val products = items.mapNotNull { item ->
-            productRepository.getById(item.productId)
-        }
-        val calculatedTotal = sell.calculateTotalAmount(products)
+        // Calculate total amount from the items' unit prices
+        val calculatedTotal = items.sumOf { it.unitPrice * it.quantity }
 
         // Create sell with calculated total
         val sellWithTotal = sell.copy(totalAmount = calculatedTotal)

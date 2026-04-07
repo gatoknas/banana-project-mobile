@@ -29,8 +29,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -57,14 +74,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.banana.project.R
 import org.banana.project.viewmodels.SellCreationViewModel
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.layout.fillMaxWidth
 import org.banana.project.ui.components.MicrophoneAndStatus
 import org.banana.project.ui.components.ParsedResultsTable
-import org.banana.project.ui.components.RetroCard
-import org.banana.project.model.ParsedSellItem
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -75,15 +86,42 @@ class SellCreationScreen() : Screen {
         val viewModel = hiltViewModel<SellCreationViewModel>()
         val parsedItems by viewModel.parsedItems.collectAsState()
         val mergedKeys by viewModel.mergedItemKeys.collectAsState()
+        val isSubmitting by viewModel.isSubmitting.collectAsState()
+        val submitResult by viewModel.submitResult.collectAsState()
         
         val context = LocalContext.current
-        var recognizedText by remember { mutableStateOf("Presione y mantenga el micrófono para hablar") }
+        val defaultMessage = "Presione y mantenga el micrófono para hablar"
+        var recognizedText by remember { mutableStateOf(defaultMessage) }
         var isRecording by remember { mutableStateOf(false) }
         var errorMessage by remember { mutableStateOf<String?>(null) }
         var hasPermission by remember { mutableStateOf(false) }
+        var showConfirmDialog by remember { mutableStateOf(false) }
 
         var speechRecognizer by remember { mutableStateOf<SpeechRecognizer?>(null) }
+        val snackbarHostState = remember { SnackbarHostState() }
         
+        // Handle submit result → show snackbar
+        LaunchedEffect(submitResult) {
+            when (val result = submitResult) {
+                is SellCreationViewModel.SubmitResult.Success -> {
+                    recognizedText = defaultMessage
+                    snackbarHostState.showSnackbar(
+                        message = "¡Venta registrada exitosamente!",
+                        duration = SnackbarDuration.Short
+                    )
+                    viewModel.clearSubmitResult()
+                }
+                is SellCreationViewModel.SubmitResult.Error -> {
+                    snackbarHostState.showSnackbar(
+                        message = result.message,
+                        duration = SnackbarDuration.Long
+                    )
+                    viewModel.clearSubmitResult()
+                }
+                null -> {}
+            }
+        }
+
         val permissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
             onResult = { isGranted ->
@@ -109,7 +147,7 @@ class SellCreationScreen() : Screen {
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onEndOfSpeech() {}
                 override fun onError(error: Int) {
-                    errorMessage = "Error occurred: \$error"
+                    errorMessage = "Error occurred: $error"
                     isRecording = false
                 }
                 override fun onResults(results: Bundle?) {
@@ -145,22 +183,214 @@ class SellCreationScreen() : Screen {
             }
         }
 
+        // Confirmation dialog
+        if (showConfirmDialog) {
+            val totalAmount = parsedItems.sumOf {
+                (it.matchedProduct?.sellPrice ?: 0.0) * it.quantity
+            }
+            val itemCount = parsedItems.size
+            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
+            val hasUnmatched = viewModel.hasUnmatchedItems
+
+            AlertDialog(
+                onDismissRequest = { showConfirmDialog = false },
+                icon = {
+                    Icon(
+                        imageVector = if (hasUnmatched) Icons.Default.Warning else Icons.Default.ShoppingCart,
+                        contentDescription = null,
+                        tint = if (hasUnmatched) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                },
+                title = {
+                    Text(
+                        if (hasUnmatched) "No se puede registrar" else "Confirmar venta",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    if (hasUnmatched) {
+                        Column {
+                            Text("Hay productos sin identificar en la lista. Elimínalos antes de registrar la venta:")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            viewModel.unmatchedItemNames.forEach { name ->
+                                Text(
+                                    "• $name",
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    } else {
+                        Column {
+                            Text("¿Deseas registrar esta venta?")
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "$itemCount producto${if (itemCount != 1) "s" else ""}",
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                "Total: ${format.format(totalAmount)}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (!hasUnmatched) {
+                        Button(
+                            onClick = {
+                                showConfirmDialog = false
+                                viewModel.submitSell()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text("Registrar")
+                        }
+                    }
+                },
+                dismissButton = {
+                    OutlinedButton(onClick = { showConfirmDialog = false }) {
+                        Text(if (hasUnmatched) "Entendido" else "Cancelar")
+                    }
+                }
+            )
+        }
+
         val configuration = LocalConfiguration.current
         val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        
-        if (isLandscape) {
-            Row(
+
+        // Shared submit button composable
+        val submitButton: @Composable () -> Unit = {
+            Button(
+                onClick = { showConfirmDialog = true },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
+                    .fillMaxWidth()
+                    .height(54.dp),
+                enabled = parsedItems.isNotEmpty() && !isSubmitting,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                )
             ) {
-                // Left Column: Mic and Text
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Registrando...", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Registrar Venta", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+
+        Scaffold(
+            snackbarHost = {
+                SnackbarHost(hostState = snackbarHostState) { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            }
+        ) { paddingValues ->
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Left Column: Mic and Text
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        MicrophoneAndStatus(
+                            isRecording = isRecording,
+                            hasPermission = hasPermission,
+                            recognizedText = recognizedText,
+                            errorMessage = errorMessage,
+                            onPressStart = {
+                                AppLogger.d("Microphone button pressed")
+                                if (hasPermission) {
+                                    try {
+                                        isRecording = true
+                                        errorMessage = null
+                                        speechRecognizer?.startListening(speechIntent)
+                                    } catch (e: Exception) {
+                                        AppLogger.e("Error starting speech recognition", e)
+                                        errorMessage = "Failed to start microphone: ${e.localizedMessage}"
+                                        isRecording = false
+                                    }
+                                } else {
+                                    errorMessage = "Please grant microphone permission first"
+                                }
+                            },
+                            onPressEnd = {
+                                AppLogger.d("Microphone button released")
+                                if (isRecording) {
+                                    try {
+                                        isRecording = false
+                                        speechRecognizer?.stopListening()
+                                    } catch (e: Exception) {
+                                        AppLogger.e("Error stopping speech recognition", e)
+                                        errorMessage = "Failed to stop microphone: ${e.localizedMessage}"
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    // Right Column: Table + Submit Button
+                    if (parsedItems.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp)
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                ParsedResultsTable(
+                                    items = parsedItems,
+                                    onItemRemoved = { viewModel.removeItem(it) },
+                                    onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
+                                    mergedItemKeys = mergedKeys,
+                                    onMergedAnimationComplete = { viewModel.clearMergedKeys() }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            submitButton()
+                        }
+                    }
+                }
+            } else {
+                // Portrait
                 Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.weight(1f)
+                    verticalArrangement = Arrangement.Center
                 ) {
                     MicrophoneAndStatus(
                         isRecording = isRecording,
@@ -176,7 +406,7 @@ class SellCreationScreen() : Screen {
                                     speechRecognizer?.startListening(speechIntent)
                                 } catch (e: Exception) {
                                     AppLogger.e("Error starting speech recognition", e)
-                                    errorMessage = "Failed to start microphone: \${e.localizedMessage}"
+                                    errorMessage = "Failed to start microphone: ${e.localizedMessage}"
                                     isRecording = false
                                 }
                             } else {
@@ -191,85 +421,28 @@ class SellCreationScreen() : Screen {
                                     speechRecognizer?.stopListening()
                                 } catch (e: Exception) {
                                     AppLogger.e("Error stopping speech recognition", e)
-                                    errorMessage = "Failed to stop microphone: \${e.localizedMessage}"
+                                    errorMessage = "Failed to stop microphone: ${e.localizedMessage}"
                                 }
                             }
                         }
                     )
-                }
 
-                // Right Column: Table
-                if (parsedItems.isNotEmpty()) {
-                    Box(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                        ParsedResultsTable(
-                            items = parsedItems,
-                            onItemRemoved = { viewModel.removeItem(it) },
-                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
-                            mergedItemKeys = mergedKeys,
-                            onMergedAnimationComplete = { viewModel.clearMergedKeys() }
-                        )
-                    }
-                }
-            }
-        } else {
-            // Portrait
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                MicrophoneAndStatus(
-                    isRecording = isRecording,
-                    hasPermission = hasPermission,
-                    recognizedText = recognizedText,
-                    errorMessage = errorMessage,
-                    onPressStart = {
-                        AppLogger.d("Microphone button pressed")
-                        if (hasPermission) {
-                            try {
-                                isRecording = true
-                                errorMessage = null
-                                speechRecognizer?.startListening(speechIntent)
-                            } catch (e: Exception) {
-                                AppLogger.e("Error starting speech recognition", e)
-                                errorMessage = "Failed to start microphone: \${e.localizedMessage}"
-                                isRecording = false
-                            }
-                        } else {
-                            errorMessage = "Please grant microphone permission first"
+                    if (parsedItems.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                            ParsedResultsTable(
+                                items = parsedItems,
+                                onItemRemoved = { viewModel.removeItem(it) },
+                                onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
+                                mergedItemKeys = mergedKeys,
+                                onMergedAnimationComplete = { viewModel.clearMergedKeys() }
+                            )
                         }
-                    },
-                    onPressEnd = {
-                        AppLogger.d("Microphone button released")
-                        if (isRecording) {
-                            try {
-                                isRecording = false
-                                speechRecognizer?.stopListening()
-                            } catch (e: Exception) {
-                                AppLogger.e("Error stopping speech recognition", e)
-                                errorMessage = "Failed to stop microphone: \${e.localizedMessage}"
-                            }
-                        }
-                    }
-                )
-
-                if (parsedItems.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                        ParsedResultsTable(
-                            items = parsedItems,
-                            onItemRemoved = { viewModel.removeItem(it) },
-                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
-                            mergedItemKeys = mergedKeys,
-                            onMergedAnimationComplete = { viewModel.clearMergedKeys() }
-                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        submitButton()
                     }
                 }
             }
         }
     }
 }
-
-

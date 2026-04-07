@@ -10,7 +10,8 @@ import java.time.Instant
  */
 data class SellItem(
     val productId: Long,
-    val quantity: Int
+    val quantity: Int,
+    val unitPrice: Double = 0.0
 )
 
 /**
