@@ -74,6 +74,7 @@ class SellCreationScreen() : Screen {
     override fun Content() {
         val viewModel = hiltViewModel<SellCreationViewModel>()
         val parsedItems by viewModel.parsedItems.collectAsState()
+        val mergedKeys by viewModel.mergedItemKeys.collectAsState()
         
         val context = LocalContext.current
         var recognizedText by remember { mutableStateOf("Presione y mantenga el micrófono para hablar") }
@@ -203,7 +204,9 @@ class SellCreationScreen() : Screen {
                         ParsedResultsTable(
                             items = parsedItems,
                             onItemRemoved = { viewModel.removeItem(it) },
-                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) }
+                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
+                            mergedItemKeys = mergedKeys,
+                            onMergedAnimationComplete = { viewModel.clearMergedKeys() }
                         )
                     }
                 }
@@ -258,7 +261,9 @@ class SellCreationScreen() : Screen {
                         ParsedResultsTable(
                             items = parsedItems,
                             onItemRemoved = { viewModel.removeItem(it) },
-                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) }
+                            onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
+                            mergedItemKeys = mergedKeys,
+                            onMergedAnimationComplete = { viewModel.clearMergedKeys() }
                         )
                     }
                 }
