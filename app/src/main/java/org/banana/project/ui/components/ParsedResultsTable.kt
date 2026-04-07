@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
@@ -72,7 +73,9 @@ import java.time.Instant
 fun ParsedResultsTable(
     items: List<ParsedSellItem>,
     onItemRemoved: (ParsedSellItem) -> Unit = {},
-    onQuantityChanged: (ParsedSellItem, Int) -> Unit = { _, _ -> }
+    onQuantityChanged: (ParsedSellItem, Int) -> Unit = { _, _ -> },
+    mergedItemKeys: Set<String> = emptySet(),
+    onMergedAnimationComplete: () -> Unit = {}
 ) {
     // Bottom sheet state
     var editingItem by remember { mutableStateOf<ParsedSellItem?>(null) }
@@ -303,7 +306,7 @@ fun ParsedResultsTable(
 
                     val isSwiping = dismissState.targetValue != SwipeToDismissBoxValue.Settled
                     
-                    val beatScale = remember { androidx.compose.animation.core.Animatable(1f) }
+                    val beatScale = remember { Animatable(1f) }
                     LaunchedEffect(isSwiping) {
                         if (isSwiping) {
                             beatScale.animateTo(
@@ -319,6 +322,24 @@ fun ParsedResultsTable(
                     }
                     
                     val smoothScale = beatScale.value
+
+                    // Merge highlight animation
+                    val itemKey = if (item.matchedProduct != null) {
+                        "product_${item.matchedProduct.id}"
+                    } else {
+                        "name_${item.parsedName.lowercase()}"
+                    }
+                    val isMerged = mergedItemKeys.contains(itemKey)
+                    val highlightAlpha = remember { Animatable(0f) }
+                    LaunchedEffect(isMerged) {
+                        if (isMerged) {
+                            highlightAlpha.animateTo(0.45f, animationSpec = tween(200))
+                            highlightAlpha.animateTo(0f, animationSpec = tween(800))
+                            onMergedAnimationComplete()
+                        }
+                    }
+                    val mergeHighlightColor = MaterialTheme.colorScheme.tertiary
+                        .copy(alpha = highlightAlpha.value)
                     
                     SwipeToDismissBox(
                         state = dismissState,
@@ -347,7 +368,10 @@ fun ParsedResultsTable(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .scale(smoothScale)
-                                .background(MaterialTheme.colorScheme.onPrimary)
+                                .background(mergeHighlightColor)
+                                .background(MaterialTheme.colorScheme.onPrimary.copy(
+                                    alpha = 1f - highlightAlpha.value
+                                ))
                                 .padding(vertical = 8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
