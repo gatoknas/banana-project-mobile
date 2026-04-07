@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -76,6 +77,7 @@ fun ParsedResultsTable(
     // Bottom sheet state
     var editingItem by remember { mutableStateOf<ParsedSellItem?>(null) }
     var tempQuantity by remember { mutableIntStateOf(0) }
+    var itemPendingDeletion by remember { mutableStateOf<ParsedSellItem?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
@@ -211,6 +213,42 @@ fun ParsedResultsTable(
         }
     }
 
+    // Confirmation dialog for swipe-to-delete
+    if (itemPendingDeletion != null) {
+        AlertDialog(
+            onDismissRequest = { itemPendingDeletion = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Eliminar producto") },
+            text = {
+                Text("¿Estás seguro de que deseas eliminar \"${itemPendingDeletion!!.parsedName}\" de la lista?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        itemPendingDeletion?.let { onItemRemoved(it) }
+                        itemPendingDeletion = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { itemPendingDeletion = null }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     RetroCard(
         backgroundColor = MaterialTheme.colorScheme.onPrimary,
         modifier = Modifier.fillMaxWidth()
@@ -248,11 +286,9 @@ fun ParsedResultsTable(
                     val dismissState = rememberSwipeToDismissBoxState(
                         confirmValueChange = { dismissValue ->
                             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
-                                onItemRemoved(item)
-                                true
-                            } else {
-                                false
+                                itemPendingDeletion = item
                             }
+                            false
                         }
                     )
                     
