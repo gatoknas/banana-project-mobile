@@ -1,10 +1,10 @@
 package org.banana.project.data
 
 import org.banana.project.data.repository.ProductRepository
-import org.banana.project.data.repository.SellRepository
+import org.banana.project.data.repository.SaleRepository
 import org.banana.project.model.Product
-import org.banana.project.model.Sell
-import org.banana.project.model.SellItem
+import org.banana.project.model.Sale
+import org.banana.project.model.SaleItem
 
 /**
  * Unit of Work pattern implementation for coordinating database operations.
@@ -12,14 +12,14 @@ import org.banana.project.model.SellItem
  */
 class UnitOfWork(
     private val productRepository: ProductRepository,
-    private val sellRepository: SellRepository
+    private val saleRepository: SaleRepository
 ) {
 
     /**
-     * Create a new sell with its items in a single transaction.
+     * Create a new sale with its items in a single transaction.
      * This ensures that either all data is saved or none is saved.
      */
-    suspend fun createSellWithItems(sell: Sell, items: List<SellItem>): Long {
+    suspend fun createSaleWithItems(sale: Sale, items: List<SaleItem>): Long {
         // Validate that all products exist
         for (item in items) {
             val product = productRepository.getById(item.productId)
@@ -31,10 +31,10 @@ class UnitOfWork(
         // Calculate total amount from the items' unit prices
         val calculatedTotal = items.sumOf { it.unitPrice * it.quantity }
 
-        // Create sell with calculated total
-        val sellWithTotal = sell.copy(totalAmount = calculatedTotal)
+        // Create sale with calculated total
+        val saleWithTotal = sale.copy(totalAmount = calculatedTotal)
 
-        return sellRepository.insertSellWithItems(sellWithTotal, items)
+        return saleRepository.insertSaleWithItems(saleWithTotal, items)
     }
 
     /**
@@ -45,8 +45,8 @@ class UnitOfWork(
     }
 
     /**
-     * Get product catalog with sells summary.
-     * Returns products with their sell statistics.
+     * Get product catalog with sales summary.
+     * Returns products with their sale statistics.
      */
     suspend fun getProductCatalogWithStats(): List<ProductWithStats> {
         val products = productRepository.getAll() // This would need to be converted to suspend
@@ -56,23 +56,23 @@ class UnitOfWork(
     }
 
     /**
-     * Delete a sell and all its associated items.
+     * Delete a sale and all its associated items.
      */
-    suspend fun deleteSellCompletely(sellId: Long) {
-        sellRepository.deleteSellWithItems(sellId)
+    suspend fun deleteSaleCompletely(saleId: Long) {
+        saleRepository.deleteSaleWithItems(saleId)
     }
 
     /**
      * Get sales report for a date range.
      */
     suspend fun getSalesReport(startDate: java.time.Instant, endDate: java.time.Instant): SalesReport {
-        val totalAmount = sellRepository.getTotalAmountByDateRange(startDate, endDate)
-        val sellCount = sellRepository.getCount() // This would need filtering by date range
+        val totalAmount = saleRepository.getTotalAmountByDateRange(startDate, endDate)
+        val saleCount = saleRepository.getCount() // This would need filtering by date range
         val productsSold = 0 // This would require additional queries
 
         return SalesReport(
             totalAmount = totalAmount,
-            sellCount = sellCount,
+            saleCount = saleCount,
             productsSold = productsSold,
             periodStart = startDate,
             periodEnd = endDate
@@ -93,7 +93,7 @@ class UnitOfWork(
      */
     data class SalesReport(
         val totalAmount: Double,
-        val sellCount: Int,
+        val saleCount: Int,
         val productsSold: Int,
         val periodStart: java.time.Instant,
         val periodEnd: java.time.Instant

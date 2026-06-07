@@ -1,7 +1,7 @@
 package org.banana.project.utils
 
 import org.banana.project.model.Product
-import org.banana.project.model.ParsedSellItem
+import org.banana.project.model.ParsedSaleItem
 import kotlin.math.min
 
 object ProductMatchingService {
@@ -13,7 +13,7 @@ object ProductMatchingService {
     fun matchParsedItemsToProducts(
         parsedItems: List<ParsedItem>,
         dbProducts: List<Product>
-    ): List<ParsedSellItem> {
+    ): List<ParsedSaleItem> {
         return parsedItems.map { parsedItem ->
             val match = findBestMatch(parsedItem.name, dbProducts)
             
@@ -23,7 +23,7 @@ object ProductMatchingService {
                 AppLogger.w("No match found for: '${parsedItem.name}'")
             }
             
-            ParsedSellItem(
+            ParsedSaleItem(
                 quantity = parsedItem.quantity,
                 parsedName = parsedItem.name,
                 matchedProduct = match

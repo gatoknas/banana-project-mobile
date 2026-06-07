@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import org.banana.project.data.DatabaseSeeder
 import org.banana.project.navigation.CreateProductScreen
 import org.banana.project.navigation.DashboardScreen
-import org.banana.project.navigation.SellCreationScreen
+import org.banana.project.navigation.SaleCreationScreen
 import org.banana.project.ui.components.RetroHeader
 import org.banana.project.ui.theme.BananaProjectTheme
 import org.banana.project.ui.theme.ThemeMode
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Navigator(screen = SellCreationScreen()) { navigator ->
+                    Navigator(screen = SaleCreationScreen()) { navigator ->
                         Column(
                             modifier = Modifier
                                 .background(color = MaterialTheme.colorScheme.background)
@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
                                     navigator.replaceAll(CreateProductScreen(windowSizeClass))
                                 },
                                 onSellCreationClick = {
-                                    navigator.push(SellCreationScreen())
+                                    navigator.push(SaleCreationScreen())
                                 }
                             )
                             CurrentScreen()

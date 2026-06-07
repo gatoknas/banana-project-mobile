@@ -11,9 +11,9 @@ import dagger.hilt.components.SingletonComponent
 import org.banana.project.data.UnitOfWork
 import org.banana.project.data.database.BananaDatabase
 import org.banana.project.data.repository.ProductRepository
-import org.banana.project.data.repository.SellRepository
+import org.banana.project.data.repository.SaleRepository
 import org.banana.project.services.ProductService
-import org.banana.project.services.SellService
+import org.banana.project.services.SaleService
 import javax.inject.Singleton
 
 /**
@@ -43,17 +43,17 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideSellRepository(database: BananaDatabase): SellRepository {
-        return SellRepository(database)
+    fun provideSaleRepository(database: BananaDatabase): SaleRepository {
+        return SaleRepository(database)
     }
 
     @Provides
     @Singleton
     fun provideUnitOfWork(
         productRepository: ProductRepository,
-        sellRepository: SellRepository
+        saleRepository: SaleRepository
     ): UnitOfWork {
-        return UnitOfWork(productRepository, sellRepository)
+        return UnitOfWork(productRepository, saleRepository)
     }
 
     @Provides
@@ -67,7 +67,7 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideSellService(unitOfWork: UnitOfWork): SellService {
-        return SellService(unitOfWork)
+    fun provideSaleService(unitOfWork: UnitOfWork): SaleService {
+        return SaleService(unitOfWork)
     }
 }

@@ -8,24 +8,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import org.banana.project.data.repository.ProductRepository
-import org.banana.project.model.ParsedSellItem
-import org.banana.project.model.Sell
-import org.banana.project.model.SellItem
-import org.banana.project.services.SellService
-import org.banana.project.utils.ParsedItem
+import org.banana.project.model.ParsedSaleItem
+import org.banana.project.model.Sale
+import org.banana.project.model.SaleItem
+import org.banana.project.services.SaleService
 import org.banana.project.utils.ProductMatchingService
 import org.banana.project.utils.SpanishParserHelper
 import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
-class SellCreationViewModel @Inject constructor(
+class SaleCreationViewModel @Inject constructor(
     private val productRepository: ProductRepository,
-    private val sellService: SellService
+    private val saleService: SaleService
 ) : ViewModel() {
 
-    private val _parsedItems = MutableStateFlow<List<ParsedSellItem>>(emptyList())
-    val parsedItems: StateFlow<List<ParsedSellItem>> = _parsedItems.asStateFlow()
+    private val _parsedItems = MutableStateFlow<List<ParsedSaleItem>>(emptyList())
+    val parsedItems: StateFlow<List<ParsedSaleItem>> = _parsedItems.asStateFlow()
 
     private val _mergedItemKeys = MutableStateFlow<Set<String>>(emptySet())
     val mergedItemKeys: StateFlow<Set<String>> = _mergedItemKeys.asStateFlow()
@@ -37,7 +36,7 @@ class SellCreationViewModel @Inject constructor(
     val submitResult: StateFlow<SubmitResult?> = _submitResult.asStateFlow()
 
     sealed class SubmitResult {
-        data class Success(val sellId: Long) : SubmitResult()
+        data class Success(val saleId: Long) : SubmitResult()
         data class Error(val message: String) : SubmitResult()
     }
 
@@ -71,11 +70,11 @@ class SellCreationViewModel @Inject constructor(
         }
     }
     
-    fun removeItem(item: ParsedSellItem) {
+    fun removeItem(item: ParsedSaleItem) {
         _parsedItems.value = _parsedItems.value.filter { it != item }
     }
     
-    fun updateItemQuantity(item: ParsedSellItem, newQuantity: Int) {
+    fun updateItemQuantity(item: ParsedSaleItem, newQuantity: Int) {
         val clampedQuantity = newQuantity.coerceAtLeast(1)
         _parsedItems.value = _parsedItems.value.map {
             if (it == item) it.copy(quantity = clampedQuantity) else it
@@ -83,14 +82,13 @@ class SellCreationViewModel @Inject constructor(
     }
 
     /**
-     * Submits the current sell to the database.
-     * Only matched items are included. Blocks if any unmatched items exist (Option B).
+     * Submits the current sale to the database.
+     * Only matched items are included. Blocks if any unmatched items exist.
      */
-    fun submitSell() {
+    fun submitSale() {
         val currentItems = _parsedItems.value
         if (currentItems.isEmpty()) return
 
-        // Option B: block if unmatched items exist
         if (currentItems.any { it.matchedProduct == null }) {
             _submitResult.value = SubmitResult.Error(
                 "Hay productos sin identificar en la lista. Elimínalos antes de registrar la venta."
@@ -101,8 +99,8 @@ class SellCreationViewModel @Inject constructor(
         viewModelScope.launch {
             _isSubmitting.value = true
 
-            val sellItems = currentItems.map { parsed ->
-                SellItem(
+            val saleItems = currentItems.map { parsed ->
+                SaleItem(
                     productId = parsed.matchedProduct!!.id,
                     quantity = parsed.quantity,
                     unitPrice = parsed.matchedProduct.sellPrice
@@ -113,18 +111,18 @@ class SellCreationViewModel @Inject constructor(
                 (parsed.matchedProduct?.sellPrice ?: 0.0) * parsed.quantity
             }
 
-            val sell = Sell(
+            val sale = Sale(
                 id = 0,
                 items = emptyList(),
                 totalAmount = totalAmount,
                 dateTime = Instant.now()
             )
 
-            val result = sellService.createSell(sell, sellItems)
+            val result = saleService.createSale(sale, saleItems)
 
             result.fold(
-                onSuccess = { sellId ->
-                    _submitResult.value = SubmitResult.Success(sellId)
+                onSuccess = { saleId ->
+                    _submitResult.value = SubmitResult.Success(saleId)
                     _parsedItems.value = emptyList()
                     _mergedItemKeys.value = emptySet()
                 },
@@ -152,10 +150,10 @@ class SellCreationViewModel @Inject constructor(
     }
 
     /**
-     * Returns a unique string key for a ParsedSellItem, used to
+     * Returns a unique string key for a ParsedSaleItem, used to
      * identify duplicates during merge.
      */
-    private fun itemKey(item: ParsedSellItem): String {
+    private fun itemKey(item: ParsedSaleItem): String {
         return if (item.matchedProduct != null) {
             "product_${item.matchedProduct.id}"
         } else {
@@ -169,13 +167,12 @@ class SellCreationViewModel @Inject constructor(
      *   for unmatched items), its quantity is summed.
      * - New products are appended at the end.
      *
-     * Returns the merged list AND the set of keys that were merged
-     * (so the UI can highlight them).
+     * Returns the merged list AND the set of keys that were merged.
      */
     private fun mergeItems(
-        existing: List<ParsedSellItem>,
-        incoming: List<ParsedSellItem>
-    ): Pair<List<ParsedSellItem>, Set<String>> {
+        existing: List<ParsedSaleItem>,
+        incoming: List<ParsedSaleItem>
+    ): Pair<List<ParsedSaleItem>, Set<String>> {
         val merged = existing.toMutableList()
         val mergedKeys = mutableSetOf<String>()
 
@@ -199,4 +196,3 @@ class SellCreationViewModel @Inject constructor(
         return merged to mergedKeys
     }
 }
-
