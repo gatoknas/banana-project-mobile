@@ -7,19 +7,19 @@ CREATE TABLE Product (
     updated_at TEXT NOT NULL
 );
 
-CREATE TABLE Sell (
+CREATE TABLE Sale (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     total REAL NOT NULL,
     created_at TEXT NOT NULL
 );
 
-CREATE TABLE SellItem (
+CREATE TABLE SaleItem (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sell_id INTEGER NOT NULL,
+    sale_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
     quantity INTEGER NOT NULL,
     price REAL NOT NULL,
-    FOREIGN KEY (sell_id) REFERENCES Sell(id) ON DELETE CASCADE,
+    FOREIGN KEY (sale_id) REFERENCES Sale(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES Product(id) ON DELETE CASCADE
 );
 
@@ -43,28 +43,28 @@ DELETE FROM Product WHERE id = ?;
 lastInsertRowId:
 SELECT last_insert_rowid();
 
--- Queries for Sell
-selectAllSells:
-SELECT * FROM Sell ORDER BY created_at DESC;
+-- Queries for Sale
+selectAllSales:
+SELECT * FROM Sale ORDER BY created_at DESC;
 
-selectSellById:
-SELECT * FROM Sell WHERE id = ?;
+selectSaleById:
+SELECT * FROM Sale WHERE id = ?;
 
-insertSell:
-INSERT INTO Sell(total, created_at) VALUES (?, ?);
+insertSale:
+INSERT INTO Sale(total, created_at) VALUES (?, ?);
 
 getTotalAmountByDateRange:
-SELECT SUM(total) FROM Sell WHERE created_at >= ? AND created_at <= ?;
+SELECT SUM(total) FROM Sale WHERE created_at >= ? AND created_at <= ?;
 
--- Queries for SellItem
-selectSellItemsBySellId:
-SELECT * FROM SellItem WHERE sell_id = ?;
+-- Queries for SaleItem
+selectSaleItemsBySaleId:
+SELECT * FROM SaleItem WHERE sale_id = ?;
 
-insertSellItem:
-INSERT INTO SellItem(sell_id, product_id, quantity, price) VALUES (?, ?, ?, ?);
+insertSaleItem:
+INSERT INTO SaleItem(sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?);
 
-deleteSellItemsBySellId:
-DELETE FROM SellItem WHERE sell_id = ?;
+deleteSaleItemsBySaleId:
+DELETE FROM SaleItem WHERE sale_id = ?;
 
-deleteSell:
-DELETE FROM Sell WHERE id = ?;
+deleteSale:
+DELETE FROM Sale WHERE id = ?;

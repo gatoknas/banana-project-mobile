@@ -9,16 +9,6 @@ import android.speech.SpeechRecognizer
 import org.banana.project.utils.AppLogger
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -59,31 +48,26 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import cafe.adriel.voyager.core.screen.Screen
-import org.banana.project.R
-import org.banana.project.viewmodels.SellCreationViewModel
+import android.content.res.Configuration
+import org.banana.project.viewmodels.SaleCreationViewModel
 import org.banana.project.ui.components.MicrophoneAndStatus
 import org.banana.project.ui.components.ParsedResultsTable
 import java.text.NumberFormat
 import java.util.Locale
 
-class SellCreationScreen() : Screen {
+class SaleCreationScreen() : Screen {
 
     @Composable
     override fun Content() {
-        val viewModel = hiltViewModel<SellCreationViewModel>()
+        val viewModel = hiltViewModel<SaleCreationViewModel>()
         val parsedItems by viewModel.parsedItems.collectAsState()
         val mergedKeys by viewModel.mergedItemKeys.collectAsState()
         val isSubmitting by viewModel.isSubmitting.collectAsState()
@@ -103,7 +87,7 @@ class SellCreationScreen() : Screen {
         // Handle submit result → show snackbar
         LaunchedEffect(submitResult) {
             when (val result = submitResult) {
-                is SellCreationViewModel.SubmitResult.Success -> {
+                is SaleCreationViewModel.SubmitResult.Success -> {
                     recognizedText = defaultMessage
                     snackbarHostState.showSnackbar(
                         message = "¡Venta registrada exitosamente!",
@@ -111,7 +95,7 @@ class SellCreationScreen() : Screen {
                     )
                     viewModel.clearSubmitResult()
                 }
-                is SellCreationViewModel.SubmitResult.Error -> {
+                is SaleCreationViewModel.SubmitResult.Error -> {
                     snackbarHostState.showSnackbar(
                         message = result.message,
                         duration = SnackbarDuration.Long
@@ -243,7 +227,7 @@ class SellCreationScreen() : Screen {
                         Button(
                             onClick = {
                                 showConfirmDialog = false
-                                viewModel.submitSell()
+                                viewModel.submitSale()
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary

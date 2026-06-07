@@ -1,42 +1,42 @@
 package org.banana.project.services
 
 import org.banana.project.data.UnitOfWork
-import org.banana.project.model.Sell
-import org.banana.project.model.SellItem
+import org.banana.project.model.Sale
+import org.banana.project.model.SaleItem
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Service class for Sell business logic and operations.
- * Acts as a facade for sell-related operations using the Unit of Work pattern.
+ * Service class for Sale business logic and operations (formerly SellService).
+ * Acts as a facade for sale-related operations using the Unit of Work pattern.
  */
 @Singleton
-class SellService @Inject constructor(
+class SaleService @Inject constructor(
     private val unitOfWork: UnitOfWork
 ) {
 
     /**
-     * Create a new sell with items.
-     * Validates the sell data and calculates total amount automatically.
+     * Create a new sale with items.
+     * Validates the sale data and calculates total amount automatically.
      */
-    suspend fun createSell(sell: Sell, items: List<SellItem>): Result<Long> {
+    suspend fun createSale(sale: Sale, items: List<SaleItem>): Result<Long> {
         return try {
-            validateSell(sell, items)
-            val sellId = unitOfWork.createSellWithItems(sell, items)
-            Result.success(sellId)
+            validateSale(sale, items)
+            val saleId = unitOfWork.createSaleWithItems(sale, items)
+            Result.success(saleId)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     /**
-     * Get a sell by ID with its items.
+     * Get a sale by ID with its items.
      */
-    suspend fun getSell(sellId: Long): Result<Pair<Sell, List<SellItem>>?> {
+    suspend fun getSale(saleId: Long): Result<Pair<Sale, List<SaleItem>>?> {
         return try {
-            if (sellId <= 0) {
-                throw IllegalArgumentException("Invalid sell ID")
+            if (saleId <= 0) {
+                throw IllegalArgumentException("Invalid sale ID")
             }
             // Implementation would call repository through UnitOfWork
             Result.success(null) // Placeholder
@@ -46,14 +46,14 @@ class SellService @Inject constructor(
     }
 
     /**
-     * Delete a sell completely (including all items).
+     * Delete a sale completely (including all items).
      */
-    suspend fun deleteSell(sellId: Long): Result<Unit> {
+    suspend fun deleteSale(saleId: Long): Result<Unit> {
         return try {
-            if (sellId <= 0) {
-                throw IllegalArgumentException("Invalid sell ID")
+            if (saleId <= 0) {
+                throw IllegalArgumentException("Invalid sale ID")
             }
-            unitOfWork.deleteSellCompletely(sellId)
+            unitOfWork.deleteSaleCompletely(saleId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -77,11 +77,11 @@ class SellService @Inject constructor(
     }
 
     /**
-     * Calculate total amount for a sell based on current product prices.
+     * Calculate total amount for a sale based on current product prices.
      */
-    suspend fun calculateTotalAmount(sell: Sell, items: List<SellItem>): Result<Double> {
+    suspend fun calculateTotalAmount(sale: Sale, items: List<SaleItem>): Result<Double> {
         return try {
-            validateSell(sell, items)
+            validateSale(sale, items)
             // Implementation would fetch current product prices and calculate
             Result.success(0.0) // Placeholder
         } catch (e: Exception) {
@@ -90,21 +90,21 @@ class SellService @Inject constructor(
     }
 
     /**
-     * Validate sell data.
+     * Validate sale data.
      */
-    private fun validateSell(sell: Sell, items: List<SellItem>) {
-        require(items.isNotEmpty()) { "Sell must have at least one item" }
-        require(sell.totalAmount >= 0) { "Total amount cannot be negative" }
+    private fun validateSale(sale: Sale, items: List<SaleItem>) {
+        require(items.isNotEmpty()) { "Sale must have at least one item" }
+        require(sale.totalAmount >= 0) { "Total amount cannot be negative" }
 
         items.forEach { item ->
             require(item.productId > 0) { "Invalid product ID: ${item.productId}" }
             require(item.quantity > 0) { "Quantity must be positive: ${item.quantity}" }
         }
 
-        // Check for duplicate products in the same sell
+        // Check for duplicate products in the same sale
         val productIds = items.map { it.productId }
         require(productIds.size == productIds.distinct().size) {
-            "Duplicate products found in sell items"
+            "Duplicate products found in sale items"
         }
     }
 

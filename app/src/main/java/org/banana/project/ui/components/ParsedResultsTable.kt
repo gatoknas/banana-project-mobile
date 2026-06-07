@@ -59,7 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.banana.project.model.ParsedSellItem
+import org.banana.project.model.ParsedSaleItem
 import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.material3.Surface
@@ -71,16 +71,16 @@ import java.time.Instant
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParsedResultsTable(
-    items: List<ParsedSellItem>,
-    onItemRemoved: (ParsedSellItem) -> Unit = {},
-    onQuantityChanged: (ParsedSellItem, Int) -> Unit = { _, _ -> },
+    items: List<ParsedSaleItem>,
+    onItemRemoved: (ParsedSaleItem) -> Unit = {},
+    onQuantityChanged: (ParsedSaleItem, Int) -> Unit = { _, _ -> },
     mergedItemKeys: Set<String> = emptySet(),
     onMergedAnimationComplete: () -> Unit = {}
 ) {
     // Bottom sheet state
-    var editingItem by remember { mutableStateOf<ParsedSellItem?>(null) }
+    var editingItem by remember { mutableStateOf<ParsedSaleItem?>(null) }
     var tempQuantity by remember { mutableIntStateOf(0) }
-    var itemPendingDeletion by remember { mutableStateOf<ParsedSellItem?>(null) }
+    var itemPendingDeletion by remember { mutableStateOf<ParsedSaleItem?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
@@ -499,9 +499,9 @@ fun ParsedResultsTablePreview() {
             )
 
             val mockItems = listOf(
-                ParsedSellItem(quantity = 2, parsedName = "Manzanas", matchedProduct = mockProduct1),
-                ParsedSellItem(quantity = 5, parsedName = "Plátanos", matchedProduct = mockProduct2),
-                ParsedSellItem(quantity = 1, parsedName = "Pera", matchedProduct = null)
+                ParsedSaleItem(quantity = 2, parsedName = "Manzanas", matchedProduct = mockProduct1),
+                ParsedSaleItem(quantity = 5, parsedName = "Plátanos", matchedProduct = mockProduct2),
+                ParsedSaleItem(quantity = 1, parsedName = "Pera", matchedProduct = null)
             )
 
             Box(modifier = Modifier.padding(16.dp)) {
