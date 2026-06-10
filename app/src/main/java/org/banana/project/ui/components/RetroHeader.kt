@@ -15,8 +15,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import cafe.adriel.voyager.core.screen.Screen
+
 @Composable
 fun RetroHeader(
+    activeScreen: Screen?,
     onDashboardClick: () -> Unit,
     onCreateProductClick: () -> Unit,
     onSellCreationClick: () -> Unit
@@ -39,7 +42,7 @@ fun RetroHeader(
                 fontSize = 50.sp,
                 fontWeight = FontWeight.Bold,
             )
-            HeaderMenu(onDashboardClick, onCreateProductClick, onSellCreationClick)
+            HeaderMenu(activeScreen, onDashboardClick, onCreateProductClick, onSellCreationClick)
         }
     }
 }
@@ -47,5 +50,5 @@ fun RetroHeader(
 @Preview
 @Composable
 fun RetroHeaderPreview(){
-    RetroHeader(onDashboardClick = {}, onCreateProductClick = {}, onSellCreationClick = {})
+    RetroHeader(activeScreen = null, onDashboardClick = {}, onCreateProductClick = {}, onSellCreationClick = {})
 }

@@ -253,31 +253,35 @@ fun ParsedResultsTable(
     }
 
     RetroCard(
-        backgroundColor = MaterialTheme.colorScheme.onPrimary,
+        backgroundColor = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        Surface(
+            color = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface
         ) {
-            // Table Header
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "#", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.1f), textAlign = TextAlign.Center)
-                Text(text = "Cantidad", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.2f), textAlign = TextAlign.Center)
-                Text(text = "Producto", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.4f), textAlign = TextAlign.Center)
-                Text(text = "Precio", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center)
-            }
-            
-            androidx.compose.material3.HorizontalDivider(
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                thickness = 1.dp
-            )
+                // Table Header
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "#", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.1f), textAlign = TextAlign.Center)
+                    Text(text = "Cantidad", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.2f), textAlign = TextAlign.Center)
+                    Text(text = "Producto", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.4f), textAlign = TextAlign.Center)
+                    Text(text = "Precio", fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.3f), textAlign = TextAlign.Center)
+                }
+                
+                androidx.compose.material3.HorizontalDivider(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    thickness = 1.dp
+                )
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth()
@@ -369,7 +373,7 @@ fun ParsedResultsTable(
                                 .fillMaxWidth()
                                 .scale(smoothScale)
                                 .background(mergeHighlightColor)
-                                .background(MaterialTheme.colorScheme.onPrimary.copy(
+                                .background(MaterialTheme.colorScheme.surface.copy(
                                     alpha = 1f - highlightAlpha.value
                                 ))
                                 .padding(vertical = 8.dp),
@@ -465,7 +469,7 @@ fun ParsedResultsTable(
                                 fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.weight(0.3f),
                                 textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -473,6 +477,7 @@ fun ParsedResultsTable(
             }
         }
     }
+}
 }
 
 @Preview(showBackground = true)
