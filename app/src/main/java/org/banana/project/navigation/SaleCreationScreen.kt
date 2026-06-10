@@ -217,7 +217,7 @@ class SaleCreationScreen() : Screen {
                                 "Total: ${format.format(totalAmount)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -230,7 +230,8 @@ class SaleCreationScreen() : Screen {
                                 viewModel.submitSale()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                contentColor = MaterialTheme.colorScheme.onSecondary
                             )
                         ) {
                             Text("Registrar")
@@ -258,14 +259,15 @@ class SaleCreationScreen() : Screen {
                 enabled = parsedItems.isNotEmpty() && !isSubmitting,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
                     disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                 )
             ) {
                 if (isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onSecondary,
                         strokeWidth = 2.dp
                     )
                     Spacer(modifier = Modifier.width(12.dp))

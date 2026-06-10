@@ -23,6 +23,12 @@ import androidx.compose.ui.unit.dp
 import org.banana.project.R
 import org.banana.project.ui.theme.BananaProjectTheme
 
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+
+import org.banana.project.ui.theme.retroShadow
+
 @Composable
 fun RetroCard(
     modifier: Modifier = Modifier,
@@ -30,10 +36,20 @@ fun RetroCard(
     borderColor: Color = MaterialTheme.colorScheme.tertiary,
     content: @Composable () -> Unit
 ) {
+    val shadowColor = MaterialTheme.colorScheme.retroShadow
     Box(
         modifier = modifier
+            .padding(bottom = 8.dp, end = 8.dp) // padding so shadow isn't clipped
+            .drawBehind {
+                drawRoundRect(
+                    color = shadowColor.copy(alpha = 0.85f),
+                    topLeft = Offset(6.dp.toPx(), 6.dp.toPx()),
+                    size = this.size,
+                    cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx())
+                )
+            }
             .border(
-                width = 8.dp,
+                width = 6.dp, // Match web app's border-6
                 color = borderColor,
                 shape = RoundedCornerShape(24.dp)
             )

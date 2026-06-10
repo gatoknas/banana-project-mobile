@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp)
                         ) {
                             RetroHeader(
+                                activeScreen = navigator.lastItem,
                                 onDashboardClick = {
                                     navigator.replaceAll(
                                         DashboardScreen(
