@@ -41,7 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,6 +60,11 @@ import android.content.res.Configuration
 import org.banana.project.viewmodels.SaleCreationViewModel
 import org.banana.project.ui.components.MicrophoneAndStatus
 import org.banana.project.ui.components.ParsedResultsTable
+import org.banana.project.ui.theme.retroOutline
+import org.banana.project.ui.theme.retroShadow
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -68,10 +73,10 @@ class SaleCreationScreen() : Screen {
     @Composable
     override fun Content() {
         val viewModel = hiltViewModel<SaleCreationViewModel>()
-        val parsedItems by viewModel.parsedItems.collectAsState()
-        val mergedKeys by viewModel.mergedItemKeys.collectAsState()
-        val isSubmitting by viewModel.isSubmitting.collectAsState()
-        val submitResult by viewModel.submitResult.collectAsState()
+        val parsedItems by viewModel.parsedItems.collectAsStateWithLifecycle()
+        val mergedKeys by viewModel.mergedItemKeys.collectAsStateWithLifecycle()
+        val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
+        val submitResult by viewModel.submitResult.collectAsStateWithLifecycle()
         
         val context = LocalContext.current
         val defaultMessage = "Presione y mantenga el micrófono para hablar"
@@ -93,14 +98,14 @@ class SaleCreationScreen() : Screen {
                         message = "¡Venta registrada exitosamente!",
                         duration = SnackbarDuration.Short
                     )
-                    viewModel.clearSubmitResult()
+                    viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearSubmitResult)
                 }
                 is SaleCreationViewModel.SubmitResult.Error -> {
                     snackbarHostState.showSnackbar(
                         message = result.message,
                         duration = SnackbarDuration.Long
                     )
-                    viewModel.clearSubmitResult()
+                    viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearSubmitResult)
                 }
                 null -> {}
             }
@@ -138,7 +143,7 @@ class SaleCreationScreen() : Screen {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     if (!matches.isNullOrEmpty()) {
                         recognizedText = matches[0]
-                        viewModel.parseSpeechInput(matches[0])
+                        viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ParseSpeech(matches[0]))
                     }
                     isRecording = false
                 }
@@ -227,7 +232,7 @@ class SaleCreationScreen() : Screen {
                         Button(
                             onClick = {
                                 showConfirmDialog = false
-                                viewModel.submitSale()
+                                viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SubmitSale)
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.secondary,
@@ -251,35 +256,51 @@ class SaleCreationScreen() : Screen {
 
         // Shared submit button composable
         val submitButton: @Composable () -> Unit = {
-            Button(
-                onClick = { showConfirmDialog = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                enabled = parsedItems.isNotEmpty() && !isSubmitting,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary,
-                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-                )
+            val shadowColor = MaterialTheme.colorScheme.retroShadow
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onSecondary,
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("Registrando...", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Registrar Venta", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Button(
+                    onClick = { showConfirmDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth(0.8f)
+                        .height(54.dp)
+                        .padding(bottom = 6.dp, end = 6.dp) // Leave spacing for the drawn shadow
+                        .drawBehind {
+                            drawRoundRect(
+                                color = shadowColor,
+                                topLeft = Offset(6.dp.toPx(), 6.dp.toPx()),
+                                size = this.size,
+                                cornerRadius = CornerRadius(14.dp.toPx(), 14.dp.toPx())
+                            )
+                        },
+                    enabled = parsedItems.isNotEmpty() && !isSubmitting,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.retroOutline)
+                ) {
+                    if (isSubmitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onTertiary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Registrando...", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Registrar Venta", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -357,10 +378,10 @@ class SaleCreationScreen() : Screen {
                             Box(modifier = Modifier.weight(1f)) {
                                 ParsedResultsTable(
                                     items = parsedItems,
-                                    onItemRemoved = { viewModel.removeItem(it) },
-                                    onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
+                                    onItemRemoved = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.RemoveItem(it)) },
+                                    onQuantityChanged = { item, newQty -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.UpdateItemQuantity(item, newQty)) },
                                     mergedItemKeys = mergedKeys,
-                                    onMergedAnimationComplete = { viewModel.clearMergedKeys() }
+                                    onMergedAnimationComplete = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearMergedKeys) }
                                 )
                             }
                             Spacer(modifier = Modifier.height(12.dp))
@@ -418,10 +439,10 @@ class SaleCreationScreen() : Screen {
                         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                             ParsedResultsTable(
                                 items = parsedItems,
-                                onItemRemoved = { viewModel.removeItem(it) },
-                                onQuantityChanged = { item, newQty -> viewModel.updateItemQuantity(item, newQty) },
+                                onItemRemoved = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.RemoveItem(it)) },
+                                onQuantityChanged = { item, newQty -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.UpdateItemQuantity(item, newQty)) },
                                 mergedItemKeys = mergedKeys,
-                                onMergedAnimationComplete = { viewModel.clearMergedKeys() }
+                                onMergedAnimationComplete = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearMergedKeys) }
                             )
                         }
                         Spacer(modifier = Modifier.height(12.dp))

@@ -39,18 +39,36 @@ class CreateProductViewModel @Inject constructor(
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage: StateFlow<String?> = _successMessage
 
-    // Form actions
-    fun updateName(name: String) {
+    sealed class CreateProductEvent {
+        data class UpdateName(val name: String) : CreateProductEvent()
+        data class UpdateDescription(val description: String) : CreateProductEvent()
+        data class UpdateSellPrice(val sellPrice: String) : CreateProductEvent()
+        data class CreateProduct(val onSuccess: () -> Unit) : CreateProductEvent()
+    }
+
+    /**
+     * Single entry point for user interaction events.
+     */
+    fun onEvent(event: CreateProductEvent) {
+        when (event) {
+            is CreateProductEvent.UpdateName -> updateName(event.name)
+            is CreateProductEvent.UpdateDescription -> updateDescription(event.description)
+            is CreateProductEvent.UpdateSellPrice -> updateSellPrice(event.sellPrice)
+            is CreateProductEvent.CreateProduct -> createProduct(event.onSuccess)
+        }
+    }
+
+    private fun updateName(name: String) {
         _name.value = name
         clearMessages()
     }
 
-    fun updateDescription(description: String) {
+    private fun updateDescription(description: String) {
         _description.value = description
         clearMessages()
     }
 
-    fun updateSellPrice(sellPrice: String) {
+    private fun updateSellPrice(sellPrice: String) {
         _sellPrice.value = sellPrice
         clearMessages()
     }
@@ -82,7 +100,7 @@ class CreateProductViewModel @Inject constructor(
     /**
      * Create the product using the service.
      */
-    fun createProduct(onSuccess: () -> Unit) {
+    private fun createProduct(onSuccess: () -> Unit) {
         if (!validateForm()) return
 
         viewModelScope.launch {

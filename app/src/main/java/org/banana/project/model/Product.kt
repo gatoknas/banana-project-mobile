@@ -1,5 +1,8 @@
 package org.banana.project.model
 
+import androidx.compose.runtime.Stable
+import androidx.annotation.Keep
+
 /**
  * A data class representing a Product domain object.
  *
@@ -10,6 +13,8 @@ package org.banana.project.model
  * @property createdAt The creation timestamp.
  * @property updatedAt The last update timestamp.
  */
+@Stable
+@Keep
 data class Product(
     val id: Long,
     val name: String,
