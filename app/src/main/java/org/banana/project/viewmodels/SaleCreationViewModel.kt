@@ -7,20 +7,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import org.banana.project.data.repository.ProductRepository
+import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
 import org.banana.project.model.ParsedSaleItem
 import org.banana.project.model.Sale
 import org.banana.project.model.SaleItem
 import org.banana.project.services.SaleService
-import org.banana.project.utils.ProductMatchingService
-import org.banana.project.utils.SpanishParserHelper
 import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
 class SaleCreationViewModel @Inject constructor(
-    private val productRepository: ProductRepository,
-    private val saleService: SaleService
+    private val saleService: SaleService,
+    private val parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase
 ) : ViewModel() {
 
     private val _parsedItems = MutableStateFlow<List<ParsedSaleItem>>(emptyList())
@@ -40,6 +38,16 @@ class SaleCreationViewModel @Inject constructor(
         data class Error(val message: String) : SubmitResult()
     }
 
+    sealed class SaleCreationEvent {
+        data class ParseSpeech(val text: String) : SaleCreationEvent()
+        data class RemoveItem(val item: ParsedSaleItem) : SaleCreationEvent()
+        data class UpdateItemQuantity(val item: ParsedSaleItem, val newQuantity: Int) : SaleCreationEvent()
+        object SubmitSale : SaleCreationEvent()
+        object ClearSubmitResult : SaleCreationEvent()
+        object ClearItems : SaleCreationEvent()
+        object ClearMergedKeys : SaleCreationEvent()
+    }
+
     /**
      * Returns true if any item in the list has no matched product.
      */
@@ -54,38 +62,42 @@ class SaleCreationViewModel @Inject constructor(
             .filter { it.matchedProduct == null }
             .map { it.parsedName }
 
-    fun parseSpeechInput(text: String) {
+    /**
+     * Single entry point to handle user and UI events.
+     */
+    fun onEvent(event: SaleCreationEvent) {
+        when (event) {
+            is SaleCreationEvent.ParseSpeech -> parseSpeechInput(event.text)
+            is SaleCreationEvent.RemoveItem -> removeItem(event.item)
+            is SaleCreationEvent.UpdateItemQuantity -> updateItemQuantity(event.item, event.newQuantity)
+            is SaleCreationEvent.SubmitSale -> submitSale()
+            is SaleCreationEvent.ClearSubmitResult -> clearSubmitResult()
+            is SaleCreationEvent.ClearItems -> clearItems()
+            is SaleCreationEvent.ClearMergedKeys -> clearMergedKeys()
+        }
+    }
+
+    private fun parseSpeechInput(text: String) {
         viewModelScope.launch {
-            val items = SpanishParserHelper.parseSpeech(text)
-            
-            // Fetch potential catalog products representing this location synchronously
-            val dbProducts = productRepository.getAllSync()
-            
-            // Fuzzy match the recognized tokens against actual Products
-            val matchedItems = ProductMatchingService.matchParsedItemsToProducts(items, dbProducts)
-            
+            val matchedItems = parseAndMatchSpeechUseCase(text)
             val (merged, mergedKeys) = mergeItems(_parsedItems.value, matchedItems)
             _parsedItems.value = merged
             _mergedItemKeys.value = mergedKeys
         }
     }
     
-    fun removeItem(item: ParsedSaleItem) {
+    private fun removeItem(item: ParsedSaleItem) {
         _parsedItems.value = _parsedItems.value.filter { it != item }
     }
     
-    fun updateItemQuantity(item: ParsedSaleItem, newQuantity: Int) {
+    private fun updateItemQuantity(item: ParsedSaleItem, newQuantity: Int) {
         val clampedQuantity = newQuantity.coerceAtLeast(1)
         _parsedItems.value = _parsedItems.value.map {
             if (it == item) it.copy(quantity = clampedQuantity) else it
         }
     }
 
-    /**
-     * Submits the current sale to the database.
-     * Only matched items are included. Blocks if any unmatched items exist.
-     */
-    fun submitSale() {
+    private fun submitSale() {
         val currentItems = _parsedItems.value
         if (currentItems.isEmpty()) return
 
@@ -137,22 +149,18 @@ class SaleCreationViewModel @Inject constructor(
         }
     }
 
-    fun clearSubmitResult() {
+    private fun clearSubmitResult() {
         _submitResult.value = null
     }
     
-    fun clearItems() {
+    private fun clearItems() {
         _parsedItems.value = emptyList()
     }
 
-    fun clearMergedKeys() {
+    private fun clearMergedKeys() {
         _mergedItemKeys.value = emptySet()
     }
 
-    /**
-     * Returns a unique string key for a ParsedSaleItem, used to
-     * identify duplicates during merge.
-     */
     private fun itemKey(item: ParsedSaleItem): String {
         return if (item.matchedProduct != null) {
             "product_${item.matchedProduct.id}"
@@ -161,14 +169,6 @@ class SaleCreationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Merges incoming items into the existing list.
-     * - If a product already exists (same Product ID or same parsedName
-     *   for unmatched items), its quantity is summed.
-     * - New products are appended at the end.
-     *
-     * Returns the merged list AND the set of keys that were merged.
-     */
     private fun mergeItems(
         existing: List<ParsedSaleItem>,
         incoming: List<ParsedSaleItem>
@@ -181,14 +181,12 @@ class SaleCreationViewModel @Inject constructor(
             val existingIndex = merged.indexOfFirst { itemKey(it) == newKey }
 
             if (existingIndex != -1) {
-                // Merge: sum quantities
                 val current = merged[existingIndex]
                 merged[existingIndex] = current.copy(
                     quantity = current.quantity + newItem.quantity
                 )
                 mergedKeys.add(newKey)
             } else {
-                // Append new item
                 merged.add(newItem)
             }
         }

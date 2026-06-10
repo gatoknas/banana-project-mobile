@@ -17,7 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +32,12 @@ fun CreateProductScreen(
     onProductCreated: () -> Unit,
     viewModel: CreateProductViewModel = hiltViewModel()
 ) {
-    val name by viewModel.name.collectAsState()
-    val description by viewModel.description.collectAsState()
-    val sellPrice by viewModel.sellPrice.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val successMessage by viewModel.successMessage.collectAsState()
+    val name by viewModel.name.collectAsStateWithLifecycle()
+    val description by viewModel.description.collectAsStateWithLifecycle()
+    val sellPrice by viewModel.sellPrice.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val successMessage by viewModel.successMessage.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -65,7 +65,7 @@ fun CreateProductScreen(
                 // Name field
                 OutlinedTextField(
                     value = name,
-                    onValueChange = viewModel::updateName,
+                    onValueChange = { viewModel.onEvent(CreateProductViewModel.CreateProductEvent.UpdateName(it)) },
                     label = { Text("Product Name", color = MaterialTheme.colorScheme.onPrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -74,7 +74,7 @@ fun CreateProductScreen(
                 // Description field
                 OutlinedTextField(
                     value = description,
-                    onValueChange = viewModel::updateDescription,
+                    onValueChange = { viewModel.onEvent(CreateProductViewModel.CreateProductEvent.UpdateDescription(it)) },
                     label = { Text("Description", color = MaterialTheme.colorScheme.onPrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -83,7 +83,7 @@ fun CreateProductScreen(
                 // Sell Price field
                 OutlinedTextField(
                     value = sellPrice,
-                    onValueChange = viewModel::updateSellPrice,
+                    onValueChange = { viewModel.onEvent(CreateProductViewModel.CreateProductEvent.UpdateSellPrice(it)) },
                     label = { Text("Sell Price", color = MaterialTheme.colorScheme.onPrimary) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -113,7 +113,7 @@ fun CreateProductScreen(
                 // Create button
                 Button(
                     onClick = {
-                        viewModel.createProduct(onProductCreated)
+                        viewModel.onEvent(CreateProductViewModel.CreateProductEvent.CreateProduct(onProductCreated))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(

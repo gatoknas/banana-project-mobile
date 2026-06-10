@@ -27,9 +27,16 @@ object AppLogger {
         val dateTime = dateFormat.format(Date())
         val formattedMessage = "[$dateTime] [$levelString] [$APP_NAME] [$fileName:$lineNumber] $message"
         
-        Log.println(priority, APP_NAME, formattedMessage)
-        throwable?.let {
-            Log.println(priority, APP_NAME, Log.getStackTraceString(it))
+        try {
+            Log.println(priority, APP_NAME, formattedMessage)
+            throwable?.let {
+                Log.println(priority, APP_NAME, Log.getStackTraceString(it))
+            }
+        } catch (e: RuntimeException) {
+            println("[$levelString] [$APP_NAME] [$fileName:$lineNumber] $message")
+            throwable?.let {
+                println(it.stackTraceToString())
+            }
         }
     }
 

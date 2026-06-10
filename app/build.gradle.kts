@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.runtime)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
     implementation(libs.hilt.android)
@@ -107,6 +108,7 @@ dependencies {
     implementation(libs.sqldelight.coroutines.extensions)
 
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 

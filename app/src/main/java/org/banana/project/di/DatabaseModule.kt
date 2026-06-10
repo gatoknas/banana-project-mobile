@@ -16,6 +16,11 @@ import org.banana.project.services.ProductService
 import org.banana.project.services.SaleService
 import javax.inject.Singleton
 
+import org.banana.project.data.repository.SqlDelightProductRepository
+import org.banana.project.data.repository.SqlDelightSaleRepository
+import org.banana.project.services.ProductServiceImpl
+import org.banana.project.services.SaleServiceImpl
+
 /**
  * Hilt module for providing database-related dependencies.
  */
@@ -38,13 +43,13 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideProductRepository(database: BananaDatabase): ProductRepository {
-        return ProductRepository(database)
+        return SqlDelightProductRepository(database)
     }
 
     @Provides
     @Singleton
     fun provideSaleRepository(database: BananaDatabase): SaleRepository {
-        return SaleRepository(database)
+        return SqlDelightSaleRepository(database)
     }
 
     @Provides
@@ -62,12 +67,12 @@ object DatabaseModule {
         unitOfWork: UnitOfWork,
         productRepository: ProductRepository
     ): ProductService {
-        return ProductService(unitOfWork, productRepository)
+        return ProductServiceImpl(unitOfWork, productRepository)
     }
 
     @Provides
     @Singleton
     fun provideSaleService(unitOfWork: UnitOfWork): SaleService {
-        return SaleService(unitOfWork)
+        return SaleServiceImpl(unitOfWork)
     }
 }

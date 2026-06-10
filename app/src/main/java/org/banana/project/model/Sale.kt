@@ -1,6 +1,8 @@
 package org.banana.project.model
 
 import java.time.Instant
+import androidx.compose.runtime.Stable
+import androidx.annotation.Keep
 
 /**
  * A data class representing a SaleItem in a sale transaction (formerly SellItem).
@@ -9,6 +11,8 @@ import java.time.Instant
  * @property quantity The quantity of the product sold.
  * @property unitPrice The unit price of the product at the time of sale.
  */
+@Stable
+@Keep
 data class SaleItem(
     val productId: Long,
     val quantity: Int,
@@ -23,6 +27,8 @@ data class SaleItem(
  * @property totalAmount The total amount of the bill.
  * @property dateTime The date and time of the sale.
  */
+@Stable
+@Keep
 data class Sale(
     val id: Long,
     val items: List<SaleItem>,
