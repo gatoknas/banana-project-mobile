@@ -43,9 +43,9 @@ SECRET_PATTERNS = [
     (re.compile(r"(?i)(?:api[_-]?key|secret[_-]?key|auth[_-]?token|access[_-]?token|client[_-]?secret|db[_-]?pass(?:word)?)\s*[:=]\s*[\"']([a-zA-Z0-9_\-\.\$\/\+\=]{16,})[\"']"), "Hardcoded Secret / Token Assignment"),
 ]
 
-# Patterns that indicate false positives / placeholders / test values (using word boundaries)
+# Patterns that indicate false positives / placeholders / test values
 SAFE_VALUE_PATTERNS = [
-    re.compile(r"(?i)\b(?:your[_-][a-z0-9_]+|dummy|placeholder|changeme|replace_me|xxxx|<[a-z_-]+>)\b"),
+    re.compile(r"(?i)(?:your[_-][a-z0-9_]+|dummy|placeholder|changeme|replace_me|xxxx|<[a-z_-]+>)"),
     re.compile(r"(?i)(?:\$\{[a-z0-9_]+\}|os\.Getenv|process\.env|env\()"),
     re.compile(r"(?i)\b(?:localhost|127\.0\.0\.1|0\.0\.0\.0)\b"),
 ]
