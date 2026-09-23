@@ -67,3 +67,7 @@ app/src/main/assets/models/vosk-model-small-es-0.42/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Kilo AI plans and worktrees
+.kilo/plans/
+.kilo/worktrees/
