@@ -62,3 +62,8 @@ app/src/main/assets/models/vosk-model-small-es-0.42/
 
 # Agents
 .agents/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class

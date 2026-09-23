@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -18,8 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
@@ -33,13 +33,14 @@ import org.banana.project.ui.theme.retroShadow
 fun RetroMenuItem(
     text: String,
     isActive: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     if (isActive) {
         val shadowColor = MaterialTheme.colorScheme.retroShadow
         val borderColor = MaterialTheme.colorScheme.retroOutline
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .padding(bottom = 4.dp, end = 4.dp) // Leave spacing for the drawn shadow
                 .drawBehind {
                     // Draw solid retro drop shadow offset to bottom-right
@@ -53,25 +54,33 @@ fun RetroMenuItem(
                 .background(MaterialTheme.colorScheme.tertiary, shape = RoundedCornerShape(12.dp))
                 .border(2.dp, borderColor, shape = RoundedCornerShape(12.dp))
                 .clickable { onClick() }
-                .padding(horizontal = 24.dp, vertical = 14.dp), // Increased size
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = text,
                 color = MaterialTheme.colorScheme.onTertiary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
             )
         }
     } else {
         Text(
-            modifier = Modifier
-                .padding(vertical = 12.dp, horizontal = 12.dp)
+            modifier = modifier
+                .padding(vertical = 10.dp, horizontal = 8.dp)
                 .clickable { onClick() },
             text = text,
             color = MaterialTheme.colorScheme.onPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold
+            fontSize = 15.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -79,6 +88,7 @@ fun RetroMenuItem(
 @Composable
 fun HeaderMenu(
     activeScreen: Screen?,
+    modifier: Modifier = Modifier,
     onDashboardClick: () -> Unit,
     onCreateProductClick: () -> Unit,
     onSellCreationClick: () -> Unit
@@ -88,19 +98,19 @@ fun HeaderMenu(
     val isDashboardActive = activeScreen is DashboardScreen
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth() // Make it span the full width
             .padding(2.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ){
         RetroMenuItem(
-            text = "Crear Venta",
+            text = "Venta",
             isActive = isSellActive,
             onClick = onSellCreationClick
         )
         RetroMenuItem(
-            text = "Administrar Productos",
+            text = "Productos",
             isActive = isProductsActive,
             onClick = onCreateProductClick
         )

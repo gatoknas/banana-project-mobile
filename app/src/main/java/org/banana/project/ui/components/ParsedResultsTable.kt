@@ -60,8 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.banana.project.model.ParsedSaleItem
-import java.text.NumberFormat
-import java.util.Locale
+import org.banana.project.utils.CurrencyFormatter
 import androidx.compose.material3.Surface
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
@@ -414,8 +413,7 @@ fun ParsedResultsTable(
                             )
                             
                             val priceText = item.matchedProduct?.sellPrice?.let {
-                                val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
-                                format.format(it)
+                                CurrencyFormatter.formatCop(it)
                             } ?: "N/A"
                             
                             Text(
@@ -462,9 +460,8 @@ fun ParsedResultsTable(
                                 textAlign = TextAlign.End
                             )
                             
-                            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
                             Text(
-                                text = format.format(total),
+                                text = CurrencyFormatter.formatCop(total),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 modifier = Modifier.weight(0.3f),

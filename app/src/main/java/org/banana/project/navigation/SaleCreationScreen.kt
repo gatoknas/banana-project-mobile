@@ -65,8 +65,7 @@ import org.banana.project.ui.theme.retroShadow
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import java.text.NumberFormat
-import java.util.Locale
+import org.banana.project.utils.CurrencyFormatter
 
 class SaleCreationScreen() : Screen {
 
@@ -178,7 +177,6 @@ class SaleCreationScreen() : Screen {
                 (it.matchedProduct?.sellPrice ?: 0.0) * it.quantity
             }
             val itemCount = parsedItems.size
-            val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
             val hasUnmatched = viewModel.hasUnmatchedItems
 
             AlertDialog(
@@ -219,7 +217,7 @@ class SaleCreationScreen() : Screen {
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                "Total: ${format.format(totalAmount)}",
+                                "Total: ${CurrencyFormatter.formatCop(totalAmount)}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 color = MaterialTheme.colorScheme.onSurface

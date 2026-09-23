@@ -63,13 +63,13 @@ fun RetroCard(
         Image(
             painter = painterResource(id = R.drawable.paper_texture),
             contentDescription = "Background texture",
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.matchParentSize()
                 .clip(RoundedCornerShape(24.dp)),
             alpha = 0.03f,
             contentScale = ContentScale.Crop
         )
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier,
             contentAlignment = Alignment.Center,
         ) {
             content()

@@ -1,46 +1,41 @@
 package org.banana.project.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import org.banana.project.R
 
-// 1. Define a FontFamily that includes your custom font
-val BebasNeue = FontFamily(
-    Font(R.font.bebas_neue, FontWeight.Normal)
+// Outfit is the same font family used across the web app.
+// Static weights are bundled under res/font to match the web's Tailwind weights.
+val Outfit = FontFamily(
+    Font(R.font.outfit_light, FontWeight.Light),
+    Font(R.font.outfit_regular, FontWeight.Normal),
+    Font(R.font.outfit_medium, FontWeight.Medium),
+    Font(R.font.outfit_semibold, FontWeight.SemiBold),
+    Font(R.font.outfit_bold, FontWeight.Bold),
+    Font(R.font.outfit_extrabold, FontWeight.ExtraBold),
+    Font(R.font.outfit_black, FontWeight.Black)
 )
 
-// 2. Create a new Typography object, setting your custom font as the default.
-//    This will apply it to all text styles that don't explicitly override the font family.
-val AppTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = BebasNeue,
-        fontWeight = FontWeight.Normal,
-        fontSize = 57.sp,
-        lineHeight = 64.sp,
-        letterSpacing = (-0.25).sp
-    ),
-    // You can customize other styles here as well, or just set a default.
-    // For a simpler approach, you can set the default for all styles like this:
-    bodyLarge = TextStyle(
-        fontFamily = BebasNeue, // Set your font family here
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    )
-    /*
-    You can define other text styles like titleLarge, labelSmall, etc.
-    If you don't specify a fontFamily, it will fall back to the default if you were to set one
-    on the Typography constructor, or to the system default.
-    A simpler Typography definition to apply the font everywhere could be:
+// Apply Outfit to every Material3 text style so all components
+// (buttons, labels, titles, text fields, etc.) use the web font family.
+private val BaseTypography = Typography()
 
-    val AppTypography = Typography(
-        defaultFontFamily = BebasNeue
-    )
-    This uses your font for all text styles, maintaining Material's size, weight, and spacing.
-    */
+val AppTypography = Typography(
+    displayLarge = BaseTypography.displayLarge.copy(fontFamily = Outfit),
+    displayMedium = BaseTypography.displayMedium.copy(fontFamily = Outfit),
+    displaySmall = BaseTypography.displaySmall.copy(fontFamily = Outfit),
+    headlineLarge = BaseTypography.headlineLarge.copy(fontFamily = Outfit),
+    headlineMedium = BaseTypography.headlineMedium.copy(fontFamily = Outfit),
+    headlineSmall = BaseTypography.headlineSmall.copy(fontFamily = Outfit),
+    titleLarge = BaseTypography.titleLarge.copy(fontFamily = Outfit),
+    titleMedium = BaseTypography.titleMedium.copy(fontFamily = Outfit),
+    titleSmall = BaseTypography.titleSmall.copy(fontFamily = Outfit),
+    bodyLarge = BaseTypography.bodyLarge.copy(fontFamily = Outfit),
+    bodyMedium = BaseTypography.bodyMedium.copy(fontFamily = Outfit),
+    bodySmall = BaseTypography.bodySmall.copy(fontFamily = Outfit),
+    labelLarge = BaseTypography.labelLarge.copy(fontFamily = Outfit),
+    labelMedium = BaseTypography.labelMedium.copy(fontFamily = Outfit),
+    labelSmall = BaseTypography.labelSmall.copy(fontFamily = Outfit)
 )

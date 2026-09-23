@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.banana.project.ui.components.RetroCard
+import org.banana.project.utils.CurrencyFormatter
 
 val cardHeight = 250.dp
 val cardWidth = 350.dp
@@ -88,7 +89,7 @@ fun DashboardScreen(
                 ) {
                     DashboardCard(
                         title = "TOTAL REVENUE",
-                        value = "$1,000,000",
+                        value = CurrencyFormatter.formatCop(1000000.0),
                         backgroundColor = primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
@@ -171,7 +172,7 @@ private fun DashboardFlowRow(
     ) {
         DashboardCard(
             title = "TOTAL REVENUE",
-            value = "$1,000,000",
+            value = CurrencyFormatter.formatCop(1000000.0),
             backgroundColor = cardColor1,
             contentColor = MaterialTheme.colorScheme.onPrimary
         )
