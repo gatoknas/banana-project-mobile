@@ -44,12 +44,14 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authenticator: TokenAuthenticator,
-        authInterceptor: AuthInterceptor
+        authInterceptor: AuthInterceptor,
+        traceInterceptor: org.banana.project.data.network.TraceAndTelemetryInterceptor
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
         return OkHttpClient.Builder()
+            .addInterceptor(traceInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
             .authenticator(authenticator)
