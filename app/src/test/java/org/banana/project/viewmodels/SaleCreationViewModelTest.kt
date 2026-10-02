@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.banana.project.data.UnitOfWork
+import org.banana.project.data.CatalogSnapshot
 import org.banana.project.data.CatalogSyncer
 import org.banana.project.data.repository.ProductRepository
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
@@ -81,7 +82,8 @@ class SaleCreationViewModelTest {
     private lateinit var viewModel: SaleCreationViewModel
 
     private val fakeCatalogSyncer = object : CatalogSyncer {
-        override suspend fun sync(): Result<Int> = Result.success(0)
+        override suspend fun sync(): Result<CatalogSnapshot> =
+            Result.success(CatalogSnapshot(productCount = 0, categories = emptyList()))
     }
 
     private val appleProduct = Product(1L, "Manzana", "Manzana roja", 10.0, Instant.now(), Instant.now())

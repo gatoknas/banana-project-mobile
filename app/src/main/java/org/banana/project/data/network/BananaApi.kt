@@ -1,5 +1,6 @@
 package org.banana.project.data.network
 
+import org.banana.project.data.network.models.CategoryDto
 import org.banana.project.data.network.models.LoginRequest
 import org.banana.project.data.network.models.LoginResponse
 import org.banana.project.data.network.models.ProductDto
@@ -18,4 +19,7 @@ interface BananaApi {
 
     @GET("/api/v1/products")
     suspend fun getProducts(): List<ProductDto>
+
+    @GET("/api/v1/categories")
+    suspend fun getCategories(): List<CategoryDto>
 }

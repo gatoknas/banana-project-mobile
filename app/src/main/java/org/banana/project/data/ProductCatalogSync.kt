@@ -9,8 +9,17 @@ import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Result of a full catalog sync: how many sellable products were stored and the
+ * names of all product categories known to the backend.
+ */
+data class CatalogSnapshot(
+    val productCount: Int,
+    val categories: List<String>
+)
+
 interface CatalogSyncer {
-    suspend fun sync(): Result<Int>
+    suspend fun sync(): Result<CatalogSnapshot>
 }
 
 @Singleton
@@ -19,13 +28,16 @@ class ProductCatalogSync @Inject constructor(
     private val productRepository: ProductRepository
 ) : CatalogSyncer {
 
-    override suspend fun sync(): Result<Int> {
+    override suspend fun sync(): Result<CatalogSnapshot> {
         return try {
             val dtos = api.getProducts()
             val products = dtos.filter { it.isForSale }.map { it.toDomain() }
             productRepository.upsertAll(products)
-            AppLogger.i("Product catalog synced: ${products.size} sellable products")
-            Result.success(products.size)
+
+            val categories = api.getCategories().map { it.name }.distinct().sorted()
+
+            AppLogger.i("Product catalog synced: ${products.size} sellable products, ${categories.size} categories")
+            Result.success(CatalogSnapshot(productCount = products.size, categories = categories))
         } catch (e: Exception) {
             AppLogger.e("Product catalog sync failed", e)
             Result.failure(e)
@@ -40,7 +52,9 @@ class ProductCatalogSync @Inject constructor(
             description = description,
             sellPrice = sellPrice,
             createdAt = createdAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now,
-            updatedAt = updatedAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now
+            updatedAt = updatedAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: now,
+            categoryId = categoryId,
+            categoryName = categoryName
         )
     }
 }

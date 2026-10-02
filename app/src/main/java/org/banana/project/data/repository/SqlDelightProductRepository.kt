@@ -22,6 +22,8 @@ class SqlDelightProductRepository @Inject constructor(
         database.productQueries.insertProduct(
             product.name,
             product.description,
+            product.categoryId,
+            product.categoryName,
             product.sellPrice,
             product.createdAt.toString(),
             product.updatedAt.toString()
@@ -42,6 +44,8 @@ class SqlDelightProductRepository @Inject constructor(
                         product.id,
                         product.name,
                         product.description,
+                        product.categoryId,
+                        product.categoryName,
                         product.sellPrice,
                         product.createdAt.toString(),
                         product.updatedAt.toString()
@@ -50,6 +54,8 @@ class SqlDelightProductRepository @Inject constructor(
                     database.productQueries.updateProduct(
                         product.name,
                         product.description,
+                        product.categoryId,
+                        product.categoryName,
                         product.sellPrice,
                         product.updatedAt.toString(),
                         product.id
@@ -63,6 +69,8 @@ class SqlDelightProductRepository @Inject constructor(
         database.productQueries.updateProduct(
             product.name,
             product.description,
+            product.categoryId,
+            product.categoryName,
             product.sellPrice,
             product.updatedAt.toString(),
             product.id
@@ -120,7 +128,9 @@ class SqlDelightProductRepository @Inject constructor(
             description = this.description,
             sellPrice = this.price,
             createdAt = java.time.Instant.parse(this.created_at),
-            updatedAt = java.time.Instant.parse(this.updated_at)
+            updatedAt = java.time.Instant.parse(this.updated_at),
+            categoryId = this.category_id,
+            categoryName = this.category_name
         )
     }
 }

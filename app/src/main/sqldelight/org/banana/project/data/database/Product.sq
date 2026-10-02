@@ -2,6 +2,8 @@ CREATE TABLE Product (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
+    category_id INTEGER,
+    category_name TEXT,
     price REAL NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -31,15 +33,15 @@ selectProductById:
 SELECT * FROM Product WHERE id = ?;
 
 insertProduct:
-INSERT INTO Product(name, description, price, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?);
+INSERT INTO Product(name, description, category_id, category_name, price, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 insertProductWithId:
-INSERT INTO Product(id, name, description, price, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO Product(id, name, description, category_id, category_name, price, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 updateProduct:
-UPDATE Product SET name = ?, description = ?, price = ?, updated_at = ? WHERE id = ?;
+UPDATE Product SET name = ?, description = ?, category_id = ?, category_name = ?, price = ?, updated_at = ? WHERE id = ?;
 
 deleteProduct:
 DELETE FROM Product WHERE id = ?;

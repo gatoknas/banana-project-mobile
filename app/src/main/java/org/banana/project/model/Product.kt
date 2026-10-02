@@ -12,6 +12,8 @@ import androidx.annotation.Keep
  * @property sellPrice The selling price of the product.
  * @property createdAt The creation timestamp.
  * @property updatedAt The last update timestamp.
+ * @property categoryId The category identifier, when known.
+ * @property categoryName The category display name, when known.
  */
 @Stable
 @Keep
@@ -21,10 +23,12 @@ data class Product(
     val description: String?,
     val sellPrice: Double,
     val createdAt: java.time.Instant,
-    val updatedAt: java.time.Instant
+    val updatedAt: java.time.Instant,
+    val categoryId: Long? = null,
+    val categoryName: String? = null
 ) {
     // Computed properties for backward compatibility
-    val category: String get() = "General"
+    val category: String get() = categoryName ?: "General"
     val cost: Double get() = sellPrice * 0.7 // Assume 70% cost
     val supplier: String get() = "Unknown"
 }
