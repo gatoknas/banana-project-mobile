@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import org.banana.project.data.CatalogSyncer
+import org.banana.project.domain.usecase.GetProductCatalogUseCase
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
 import org.banana.project.model.ParsedSaleItem
+import org.banana.project.model.Product
 import org.banana.project.model.Sale
 import org.banana.project.model.SaleItem
 import org.banana.project.services.SaleService
@@ -20,12 +22,23 @@ import javax.inject.Inject
 class SaleCreationViewModel @Inject constructor(
     private val saleService: SaleService,
     private val parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase,
-    private val catalogSyncer: CatalogSyncer
+    private val catalogSyncer: CatalogSyncer,
+    private val getProductCatalogUseCase: GetProductCatalogUseCase
 ) : ViewModel() {
+
+    private val _catalog = MutableStateFlow<List<Product>>(emptyList())
+
+    /** The locally synced product catalog, used by the manual product picker. */
+    val catalog: StateFlow<List<Product>> = _catalog.asStateFlow()
 
     init {
         viewModelScope.launch {
             catalogSyncer.sync()
+        }
+        viewModelScope.launch {
+            getProductCatalogUseCase().collect { products ->
+                _catalog.value = products
+            }
         }
     }
 
@@ -50,6 +63,8 @@ class SaleCreationViewModel @Inject constructor(
         data class ParseSpeech(val texts: List<String>) : SaleCreationEvent()
         data class RemoveItem(val item: ParsedSaleItem) : SaleCreationEvent()
         data class UpdateItemQuantity(val item: ParsedSaleItem, val newQuantity: Int) : SaleCreationEvent()
+        data class SelectProduct(val item: ParsedSaleItem, val product: Product) : SaleCreationEvent()
+        data class ClearProductMatch(val item: ParsedSaleItem) : SaleCreationEvent()
         object SubmitSale : SaleCreationEvent()
         object ClearSubmitResult : SaleCreationEvent()
         object ClearItems : SaleCreationEvent()
@@ -78,6 +93,8 @@ class SaleCreationViewModel @Inject constructor(
             is SaleCreationEvent.ParseSpeech -> parseSpeechInput(event.texts)
             is SaleCreationEvent.RemoveItem -> removeItem(event.item)
             is SaleCreationEvent.UpdateItemQuantity -> updateItemQuantity(event.item, event.newQuantity)
+            is SaleCreationEvent.SelectProduct -> selectProduct(event.item, event.product)
+            is SaleCreationEvent.ClearProductMatch -> clearProductMatch(event.item)
             is SaleCreationEvent.SubmitSale -> submitSale()
             is SaleCreationEvent.ClearSubmitResult -> clearSubmitResult()
             is SaleCreationEvent.ClearItems -> clearItems()
@@ -102,6 +119,25 @@ class SaleCreationViewModel @Inject constructor(
         val clampedQuantity = newQuantity.coerceAtLeast(1)
         _parsedItems.value = _parsedItems.value.map {
             if (it == item) it.copy(quantity = clampedQuantity) else it
+        }
+    }
+
+    /**
+     * Assigns a manually picked product to a line and re-runs the merge pass so a
+     * product already present in the list collapses into a single line.
+     */
+    private fun selectProduct(item: ParsedSaleItem, product: Product) {
+        val withProduct = _parsedItems.value.map { current ->
+            if (current == item) current.copy(matchedProduct = product) else current
+        }
+        val (merged, mergedKeys) = mergeItems(emptyList(), withProduct)
+        _parsedItems.value = merged
+        _mergedItemKeys.value = mergedKeys
+    }
+
+    private fun clearProductMatch(item: ParsedSaleItem) {
+        _parsedItems.value = _parsedItems.value.map { current ->
+            if (current == item) current.copy(matchedProduct = null) else current
         }
     }
 
