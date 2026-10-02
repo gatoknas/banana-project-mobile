@@ -13,6 +13,7 @@ object TechniColors {
     val Lavender = Color(0xFFE6E6FA)
     val Cream = Color(0xFFFFFDD0)
     val Guayaba = Color(0xffde9a7f)
+    val Muted = Color(0xff6f6152)
 
     // Tokyo Night Palette
     val TokyoNightBg = Color(0xFF1a1b26)

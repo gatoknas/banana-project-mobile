@@ -20,6 +20,13 @@ val ColorScheme.retroShadow: Color
 val ColorScheme.retroOutline: Color
     get() = if (primary == TechniColors.Crimson) Color.Black else outline
 
+/**
+ * Secondary/muted text for paper surfaces. Falls back to a softened foreground
+ * on the Tokyo Night scheme.
+ */
+val ColorScheme.muted: Color
+    get() = if (primary == TechniColors.Crimson) TechniColors.Muted else TechniColors.TokyoNightFg.copy(alpha = 0.7f)
+
 private val LightColorScheme = lightColorScheme(
     primary = TechniColors.Crimson,
     secondary = TechniColors.Emerald,
