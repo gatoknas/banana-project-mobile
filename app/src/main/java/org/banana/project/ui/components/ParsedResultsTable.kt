@@ -61,18 +61,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.banana.project.model.ParsedSaleItem
 import org.banana.project.utils.CurrencyFormatter
+import org.banana.project.utils.SpanishTextNormalizer
 import androidx.compose.material3.Surface
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
 import org.banana.project.model.Product
+import org.banana.project.ui.theme.LedgerMono
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ParsedResultsTable(
     items: List<ParsedSaleItem>,
+    availableProducts: List<Product> = emptyList(),
     onItemRemoved: (ParsedSaleItem) -> Unit = {},
     onQuantityChanged: (ParsedSaleItem, Int) -> Unit = { _, _ -> },
+    onProductSelected: (ParsedSaleItem, Product) -> Unit = { _, _ -> },
+    onProductMatchCleared: (ParsedSaleItem) -> Unit = {},
     mergedItemKeys: Set<String> = emptySet(),
     onMergedAnimationComplete: () -> Unit = {}
 ) {
@@ -80,6 +91,8 @@ fun ParsedResultsTable(
     var editingItem by remember { mutableStateOf<ParsedSaleItem?>(null) }
     var tempQuantity by remember { mutableIntStateOf(0) }
     var itemPendingDeletion by remember { mutableStateOf<ParsedSaleItem?>(null) }
+    var pickerItem by remember { mutableStateOf<ParsedSaleItem?>(null) }
+    var pickerQuery by remember { mutableStateOf("") }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
@@ -251,6 +264,94 @@ fun ParsedResultsTable(
         )
     }
 
+    // Bottom Sheet for manual product selection
+    val pickerItemSnapshot = pickerItem
+    if (pickerItemSnapshot != null) {
+        val pickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { pickerItem = null },
+            sheetState = pickerSheetState,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 4.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    text = "Elegir producto",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Escuchado: \"${pickerItemSnapshot.parsedName}\"",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = pickerQuery,
+                    onValueChange = { pickerQuery = it },
+                    placeholder = { Text("Buscar producto") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                val results = filterProducts(availableProducts, pickerQuery)
+                if (results.isEmpty()) {
+                    Text(
+                        text = "Sin resultados",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 24.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 360.dp)
+                    ) {
+                        itemsIndexed(results, key = { _, product -> product.id }) { _, product ->
+                            ProductPickerRow(
+                                product = product,
+                                selected = pickerItemSnapshot.matchedProduct?.id == product.id,
+                                onClick = {
+                                    onProductSelected(pickerItemSnapshot, product)
+                                    pickerItem = null
+                                }
+                            )
+                        }
+                    }
+                }
+
+                if (pickerItemSnapshot.matchedProduct != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(
+                        onClick = {
+                            onProductMatchCleared(pickerItemSnapshot)
+                            pickerItem = null
+                        }
+                    ) {
+                        Text(
+                            text = "Quitar coincidencia",
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     RetroCard(
         backgroundColor = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
@@ -405,11 +506,28 @@ fun ParsedResultsTable(
                                 textAlign = TextAlign.Center
                             )
 
+                            val isMatched = item.matchedProduct != null
                             Text(
-                                text = item.parsedName,
+                                text = item.matchedProduct?.name ?: item.parsedName,
                                 fontSize = 18.sp,
-                                modifier = Modifier.weight(0.4f),
-                                textAlign = TextAlign.Center
+                                modifier = Modifier
+                                    .weight(0.4f)
+                                    .clickable {
+                                        pickerItem = item
+                                        pickerQuery = ""
+                                    }
+                                    .padding(vertical = 2.dp),
+                                textAlign = TextAlign.Center,
+                                color = if (isMatched) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                                textDecoration = if (isMatched) {
+                                    null
+                                } else {
+                                    TextDecoration.Underline
+                                }
                             )
                             
                             val priceText = item.matchedProduct?.sellPrice?.let {
@@ -475,6 +593,62 @@ fun ParsedResultsTable(
         }
     }
 }
+}
+
+/**
+ * Accent- and case-insensitive product search used by the manual picker.
+ */
+private fun filterProducts(products: List<Product>, query: String): List<Product> {
+    val normalizedQuery = SpanishTextNormalizer.normalize(query)
+    if (normalizedQuery.isEmpty()) return products
+    return products.filter { SpanishTextNormalizer.normalize(it.name).contains(normalizedQuery) }
+}
+
+@Composable
+private fun ProductPickerRow(
+    product: Product,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val background = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+    } else {
+        Color.Transparent
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(background)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = product.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = product.category,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        Text(
+            text = CurrencyFormatter.formatCop(product.sellPrice),
+            fontFamily = LedgerMono,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
 }
 
 @Preview(showBackground = true)

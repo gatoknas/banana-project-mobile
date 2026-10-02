@@ -73,6 +73,7 @@ class SaleCreationScreen() : Screen {
     override fun Content() {
         val viewModel = hiltViewModel<SaleCreationViewModel>()
         val parsedItems by viewModel.parsedItems.collectAsStateWithLifecycle()
+        val catalog by viewModel.catalog.collectAsStateWithLifecycle()
         val mergedKeys by viewModel.mergedItemKeys.collectAsStateWithLifecycle()
         val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
         val submitResult by viewModel.submitResult.collectAsStateWithLifecycle()
@@ -385,8 +386,11 @@ class SaleCreationScreen() : Screen {
                             Box(modifier = Modifier.weight(1f)) {
                                 ParsedResultsTable(
                                     items = parsedItems,
+                                    availableProducts = catalog,
                                     onItemRemoved = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.RemoveItem(it)) },
                                     onQuantityChanged = { item, newQty -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.UpdateItemQuantity(item, newQty)) },
+                                    onProductSelected = { item, product -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SelectProduct(item, product)) },
+                                    onProductMatchCleared = { item -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearProductMatch(item)) },
                                     mergedItemKeys = mergedKeys,
                                     onMergedAnimationComplete = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearMergedKeys) }
                                 )
@@ -446,8 +450,11 @@ class SaleCreationScreen() : Screen {
                         Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
                             ParsedResultsTable(
                                 items = parsedItems,
+                                availableProducts = catalog,
                                 onItemRemoved = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.RemoveItem(it)) },
                                 onQuantityChanged = { item, newQty -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.UpdateItemQuantity(item, newQty)) },
+                                onProductSelected = { item, product -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SelectProduct(item, product)) },
+                                onProductMatchCleared = { item -> viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearProductMatch(item)) },
                                 mergedItemKeys = mergedKeys,
                                 onMergedAnimationComplete = { viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearMergedKeys) }
                             )
