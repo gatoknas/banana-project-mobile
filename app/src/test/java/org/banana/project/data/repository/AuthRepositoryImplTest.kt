@@ -3,6 +3,7 @@ package org.banana.project.data.repository
 import android.content.SharedPreferences
 import kotlinx.coroutines.runBlocking
 import org.banana.project.data.network.BananaApi
+import org.banana.project.data.network.models.CategoryDto
 import org.banana.project.data.network.models.LoginRequest
 import org.banana.project.data.network.models.LoginResponse
 import org.banana.project.data.network.models.ProductDto
@@ -27,6 +28,8 @@ class AuthRepositoryImplTest {
         }
 
         override suspend fun getProducts(): List<ProductDto> = emptyList()
+
+        override suspend fun getCategories(): List<CategoryDto> = emptyList()
     }
 
     private class FakeSharedPreferences : SharedPreferences {
