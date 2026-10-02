@@ -9,6 +9,7 @@ import org.banana.project.model.Product
 interface ProductRepository {
     suspend fun insert(product: Product): Long
     suspend fun insertAll(products: List<Product>): List<Long>
+    suspend fun upsertAll(products: List<Product>)
     suspend fun update(product: Product)
     suspend fun delete(product: Product)
     suspend fun deleteById(productId: Long)
@@ -18,4 +19,5 @@ interface ProductRepository {
     fun getByCategory(category: String): Flow<List<Product>>
     fun searchByName(searchQuery: String): Flow<List<Product>>
     suspend fun getCount(): Int
+    suspend fun getSoldCounts(): Map<Long, Int>
 }

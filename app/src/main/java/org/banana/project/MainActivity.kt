@@ -23,12 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
 import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import org.banana.project.data.DatabaseSeeder
 import org.banana.project.data.repository.AuthRepository
 import org.banana.project.navigation.CreateProductScreen
 import org.banana.project.navigation.DashboardScreen
@@ -37,7 +34,6 @@ import org.banana.project.ui.screens.LoginScreen
 import org.banana.project.ui.components.RetroHeader
 import org.banana.project.ui.theme.BananaProjectTheme
 import org.banana.project.ui.theme.ThemeMode
-import org.banana.project.utils.AppLogger
 import javax.inject.Inject
 
 @ExperimentalMaterial3WindowSizeClassApi
@@ -45,21 +41,10 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var databaseSeeder: DatabaseSeeder
-
-    @Inject
     lateinit var authRepository: AuthRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        lifecycleScope.launch {
-            try {
-                databaseSeeder.seed()
-            } catch (e: Exception) {
-                AppLogger.e("Error executing database seeder: ${e.message}")
-            }
-        }
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 

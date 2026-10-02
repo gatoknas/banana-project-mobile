@@ -13,9 +13,22 @@ import javax.inject.Inject
 class ParseAndMatchSpeechUseCase @Inject constructor(
     private val productRepository: ProductRepository
 ) {
-    suspend operator fun invoke(text: String): List<ParsedSaleItem> {
-        val items = SpanishParserHelper.parseSpeech(text)
+    suspend operator fun invoke(text: String): List<ParsedSaleItem> = invoke(listOf(text))
+
+    suspend operator fun invoke(texts: List<String>): List<ParsedSaleItem> {
         val dbProducts = productRepository.getAllSync()
-        return ProductMatchingService.matchParsedItemsToProducts(items, dbProducts)
+        val soldCounts = productRepository.getSoldCounts()
+
+        return texts
+            .filter { it.isNotBlank() }
+            .map { text ->
+                val items = SpanishParserHelper.parseSpeech(text)
+                val matched = ProductMatchingService.matchParsedItemsToProducts(items, dbProducts, soldCounts)
+                val score = matched.count { it.matchedProduct != null }
+                matched to score
+            }
+            .maxByOrNull { it.second }
+            ?.first
+            ?: emptyList()
     }
 }

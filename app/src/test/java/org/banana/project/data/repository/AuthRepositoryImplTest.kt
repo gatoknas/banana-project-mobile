@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.banana.project.data.network.BananaApi
 import org.banana.project.data.network.models.LoginRequest
 import org.banana.project.data.network.models.LoginResponse
+import org.banana.project.data.network.models.ProductDto
 import org.banana.project.data.network.models.RefreshRequest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -24,6 +25,8 @@ class AuthRepositoryImplTest {
         override fun refreshToken(request: RefreshRequest): Call<LoginResponse> {
             throw NotImplementedError("Not needed for this test")
         }
+
+        override suspend fun getProducts(): List<ProductDto> = emptyList()
     }
 
     private class FakeSharedPreferences : SharedPreferences {

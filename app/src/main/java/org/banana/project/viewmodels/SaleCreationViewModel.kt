@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import org.banana.project.data.CatalogSyncer
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
 import org.banana.project.model.ParsedSaleItem
 import org.banana.project.model.Sale
@@ -18,8 +19,15 @@ import javax.inject.Inject
 @HiltViewModel
 class SaleCreationViewModel @Inject constructor(
     private val saleService: SaleService,
-    private val parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase
+    private val parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase,
+    private val catalogSyncer: CatalogSyncer
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            catalogSyncer.sync()
+        }
+    }
 
     private val _parsedItems = MutableStateFlow<List<ParsedSaleItem>>(emptyList())
     val parsedItems: StateFlow<List<ParsedSaleItem>> = _parsedItems.asStateFlow()
@@ -39,7 +47,7 @@ class SaleCreationViewModel @Inject constructor(
     }
 
     sealed class SaleCreationEvent {
-        data class ParseSpeech(val text: String) : SaleCreationEvent()
+        data class ParseSpeech(val texts: List<String>) : SaleCreationEvent()
         data class RemoveItem(val item: ParsedSaleItem) : SaleCreationEvent()
         data class UpdateItemQuantity(val item: ParsedSaleItem, val newQuantity: Int) : SaleCreationEvent()
         object SubmitSale : SaleCreationEvent()
@@ -67,7 +75,7 @@ class SaleCreationViewModel @Inject constructor(
      */
     fun onEvent(event: SaleCreationEvent) {
         when (event) {
-            is SaleCreationEvent.ParseSpeech -> parseSpeechInput(event.text)
+            is SaleCreationEvent.ParseSpeech -> parseSpeechInput(event.texts)
             is SaleCreationEvent.RemoveItem -> removeItem(event.item)
             is SaleCreationEvent.UpdateItemQuantity -> updateItemQuantity(event.item, event.newQuantity)
             is SaleCreationEvent.SubmitSale -> submitSale()
@@ -77,9 +85,9 @@ class SaleCreationViewModel @Inject constructor(
         }
     }
 
-    private fun parseSpeechInput(text: String) {
+    private fun parseSpeechInput(texts: List<String>) {
         viewModelScope.launch {
-            val matchedItems = parseAndMatchSpeechUseCase(text)
+            val matchedItems = parseAndMatchSpeechUseCase(texts)
             val (merged, mergedKeys) = mergeItems(_parsedItems.value, matchedItems)
             _parsedItems.value = merged
             _mergedItemKeys.value = mergedKeys

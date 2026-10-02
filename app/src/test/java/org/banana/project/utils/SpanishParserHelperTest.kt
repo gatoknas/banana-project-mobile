@@ -46,6 +46,11 @@ class SpanishParserHelperTest {
                     ParsedItem(2, "manzanas"),
                     ParsedItem(3, "peras")
                 )
+            ),
+            TestCase(
+                name = "Accented number word folds to unaccented",
+                speechInput = "dieciséis manzanas",
+                expectedItems = listOf(ParsedItem(16, "manzanas"))
             )
         )
 
