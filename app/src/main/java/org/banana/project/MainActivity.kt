@@ -27,8 +27,8 @@ import cafe.adriel.voyager.navigator.CurrentScreen
 import cafe.adriel.voyager.navigator.Navigator
 import dagger.hilt.android.AndroidEntryPoint
 import org.banana.project.data.repository.AuthRepository
-import org.banana.project.navigation.CreateProductScreen
 import org.banana.project.navigation.DashboardScreen
+import org.banana.project.navigation.ProductCatalogScreen
 import org.banana.project.navigation.SaleCreationScreen
 import org.banana.project.ui.screens.LoginScreen
 import org.banana.project.ui.components.RetroHeader
@@ -95,8 +95,8 @@ class MainActivity : ComponentActivity() {
                                             )
                                         )
                                     },
-                                    onCreateProductClick = {
-                                        navigator.replaceAll(CreateProductScreen(windowSizeClass))
+                                    onProductsClick = {
+                                        navigator.replaceAll(ProductCatalogScreen())
                                     },
                                     onSellCreationClick = {
                                         navigator.push(SaleCreationScreen())
