@@ -89,4 +89,58 @@ class ProductMatchingServiceTest {
             }
         }
     }
+
+    @Test
+    fun `accent folding TDT scenarios`() {
+        data class TestCase(val name: String, val target: String, val expectedProductId: Long?)
+
+        val testCases = listOf(
+            TestCase("Unaccented input matches accented product limon -> limón", "limon", 3L),
+            TestCase("Unaccented input matches accented product lapiz -> lápiz", "lapiz", 2L),
+            TestCase("Accented plural input matches accented product lápices -> lápiz", "lápices", 2L),
+            TestCase("Unaccented unknown input yields no match automovil", "automovil", null)
+        )
+
+        testCases.forEach { tc ->
+            val actual = ProductMatchingService.matchParsedItemsToProducts(listOf(ParsedItem(1, tc.target)), dbProducts)
+            val matched = actual.first().matchedProduct
+            if (tc.expectedProductId != null) {
+                assertNotNull("Failed scenario: ${tc.name}", matched)
+                assertEquals("Failed scenario: ${tc.name}", tc.expectedProductId, matched!!.id)
+            } else {
+                assertNull("Failed scenario: ${tc.name}", matched)
+            }
+        }
+    }
+
+    @Test
+    fun `popularity tie-break and no false substring TDT scenarios`() {
+        val mangoProducts = listOf(
+            Product(1L, "Mango", "Mango dulce", 1.0, Instant.now(), Instant.now()),
+            Product(2L, "Mangos", "Mangos por unidad", 1.0, Instant.now(), Instant.now())
+        )
+
+        val popularityMatch = ProductMatchingService.matchParsedItemsToProducts(
+            listOf(ParsedItem(1, "mango")),
+            mangoProducts,
+            soldCounts = mapOf(1L to 5, 2L to 100)
+        )
+        assertEquals(2L, popularityMatch.first().matchedProduct!!.id)
+
+        val noPopularityMatch = ProductMatchingService.matchParsedItemsToProducts(
+            listOf(ParsedItem(1, "mango")),
+            mangoProducts,
+            soldCounts = emptyMap()
+        )
+        assertEquals(1L, noPopularityMatch.first().matchedProduct!!.id)
+
+        val salpiconProducts = listOf(
+            Product(1L, "Salpicon", "Salpicon de frutas", 2.0, Instant.now(), Instant.now())
+        )
+        val substringMiss = ProductMatchingService.matchParsedItemsToProducts(
+            listOf(ParsedItem(1, "sal")),
+            salpiconProducts
+        )
+        assertNull("Short token should not substring-match a longer product", substringMiss.first().matchedProduct)
+    }
 }

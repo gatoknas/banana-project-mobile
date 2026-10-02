@@ -14,9 +14,11 @@ object SpanishParserHelper {
         if (speech.isBlank()) return parsedItems
 
         // Normalize text
-        val text = speech.lowercase().trim()
-            .replace(",", "")
-            .replace(".", "")
+        val text = SpanishTextNormalizer.foldAccents(
+            speech.lowercase().trim()
+                .replace(",", "")
+                .replace(".", "")
+        )
 
         val words = text.split("\\s+".toRegex())
 

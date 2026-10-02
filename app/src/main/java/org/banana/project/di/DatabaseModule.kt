@@ -9,6 +9,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.banana.project.data.UnitOfWork
+import org.banana.project.data.CatalogSyncer
+import org.banana.project.data.ProductCatalogSync
 import org.banana.project.data.database.BananaDatabase
 import org.banana.project.data.repository.ProductRepository
 import org.banana.project.data.repository.SaleRepository
@@ -74,5 +76,11 @@ object DatabaseModule {
     @Singleton
     fun provideSaleService(unitOfWork: UnitOfWork): SaleService {
         return SaleServiceImpl(unitOfWork)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCatalogSyncer(productCatalogSync: ProductCatalogSync): CatalogSyncer {
+        return productCatalogSync
     }
 }

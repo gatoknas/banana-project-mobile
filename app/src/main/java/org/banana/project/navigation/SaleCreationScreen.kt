@@ -135,14 +135,20 @@ class SaleCreationScreen() : Screen {
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onEndOfSpeech() {}
                 override fun onError(error: Int) {
-                    errorMessage = "Error occurred: $error"
+                    errorMessage = when (error) {
+                        SpeechRecognizer.ERROR_NO_MATCH -> "No se entendió el audio, intenta de nuevo"
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No se detectó voz, intenta de nuevo"
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Falta permiso de micrófono"
+                        SpeechRecognizer.ERROR_NETWORK -> "Error de red en el reconocimiento"
+                        else -> "Error de reconocimiento: $error"
+                    }
                     isRecording = false
                 }
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     if (!matches.isNullOrEmpty()) {
                         recognizedText = matches[0]
-                        viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ParseSpeech(matches[0]))
+                        viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ParseSpeech(matches.toList()))
                     }
                     isRecording = false
                 }
@@ -166,8 +172,11 @@ class SaleCreationScreen() : Screen {
         val speechIntent = remember {
             Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-US")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-CO")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-CO")
+                putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             }
         }
 

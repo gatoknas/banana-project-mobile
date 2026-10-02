@@ -8,6 +8,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.banana.project.data.UnitOfWork
+import org.banana.project.data.CatalogSyncer
 import org.banana.project.data.repository.ProductRepository
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
 import org.banana.project.model.ParsedSaleItem
@@ -34,6 +35,7 @@ class SaleCreationViewModelTest {
 
         override suspend fun insert(product: Product): Long = 0L
         override suspend fun insertAll(products: List<Product>): List<Long> = emptyList()
+        override suspend fun upsertAll(products: List<Product>) {}
         override suspend fun update(product: Product) {}
         override suspend fun delete(product: Product) {}
         override suspend fun deleteById(productId: Long) {}
@@ -43,6 +45,7 @@ class SaleCreationViewModelTest {
         override fun getByCategory(category: String): Flow<List<Product>> = flowOf(emptyList())
         override fun searchByName(searchQuery: String): Flow<List<Product>> = flowOf(emptyList())
         override suspend fun getCount(): Int = dbProducts.size
+        override suspend fun getSoldCounts(): Map<Long, Int> = emptyMap()
     }
 
     class MockSaleService : SaleService {
@@ -77,6 +80,10 @@ class SaleCreationViewModelTest {
     private lateinit var parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase
     private lateinit var viewModel: SaleCreationViewModel
 
+    private val fakeCatalogSyncer = object : CatalogSyncer {
+        override suspend fun sync(): Result<Int> = Result.success(0)
+    }
+
     private val appleProduct = Product(1L, "Manzana", "Manzana roja", 10.0, Instant.now(), Instant.now())
     private val bananaProduct = Product(2L, "Plátano", "Plátano maduro", 5.0, Instant.now(), Instant.now())
 
@@ -88,7 +95,7 @@ class SaleCreationViewModelTest {
         }
         mockSaleService = MockSaleService()
         parseAndMatchSpeechUseCase = ParseAndMatchSpeechUseCase(mockProductRepository)
-        viewModel = SaleCreationViewModel(mockSaleService, parseAndMatchSpeechUseCase)
+        viewModel = SaleCreationViewModel(mockSaleService, parseAndMatchSpeechUseCase, fakeCatalogSyncer)
     }
 
     @After
@@ -112,7 +119,7 @@ class SaleCreationViewModelTest {
             TestCase(
                 name = "Add single matched item by speech",
                 eventsToDispatch = listOf(
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("2 manzanas")
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("2 manzanas"))
                 ),
                 expectedParsedItemsSize = 1,
                 expectedMergedKeysSize = 0,
@@ -123,8 +130,8 @@ class SaleCreationViewModelTest {
             TestCase(
                 name = "Merge duplicate items sums quantity",
                 eventsToDispatch = listOf(
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("2 manzanas"),
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("3 manzanas")
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("2 manzanas")),
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("3 manzanas"))
                 ),
                 expectedParsedItemsSize = 1,
                 expectedMergedKeysSize = 1,
@@ -135,8 +142,8 @@ class SaleCreationViewModelTest {
             TestCase(
                 name = "Remove item from list",
                 eventsToDispatch = listOf(
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("2 manzanas"),
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("3 platanos")
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("2 manzanas")),
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("3 platanos"))
                 ),
                 expectedParsedItemsSize = 2,
                 expectedMergedKeysSize = 0,
@@ -156,7 +163,7 @@ class SaleCreationViewModelTest {
             TestCase(
                 name = "Submit sale successfully with matched items",
                 eventsToDispatch = listOf(
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("2 manzanas"),
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("2 manzanas")),
                     SaleCreationViewModel.SaleCreationEvent.SubmitSale
                 ),
                 expectedParsedItemsSize = 0, // Cleared after success
@@ -168,7 +175,7 @@ class SaleCreationViewModelTest {
             TestCase(
                 name = "Fail to submit sale when there is an unmatched item",
                 eventsToDispatch = listOf(
-                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech("5 exóticos"),
+                    SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("5 exóticos")),
                     SaleCreationViewModel.SaleCreationEvent.SubmitSale
                 ),
                 expectedParsedItemsSize = 1, // Not cleared on error
@@ -181,7 +188,7 @@ class SaleCreationViewModelTest {
 
         testCases.forEach { tc ->
             // Re-instantiate ViewModel to clean up internal state
-            viewModel = SaleCreationViewModel(mockSaleService, parseAndMatchSpeechUseCase)
+            viewModel = SaleCreationViewModel(mockSaleService, parseAndMatchSpeechUseCase, fakeCatalogSyncer)
             mockSaleService.capturedSale = null
             mockSaleService.capturedItems = null
 

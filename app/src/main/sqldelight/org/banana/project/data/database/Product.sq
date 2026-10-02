@@ -34,6 +34,10 @@ insertProduct:
 INSERT INTO Product(name, description, price, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?);
 
+insertProductWithId:
+INSERT INTO Product(id, name, description, price, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
 updateProduct:
 UPDATE Product SET name = ?, description = ?, price = ?, updated_at = ? WHERE id = ?;
 
@@ -68,3 +72,6 @@ DELETE FROM SaleItem WHERE sale_id = ?;
 
 deleteSale:
 DELETE FROM Sale WHERE id = ?;
+
+getSoldCounts:
+SELECT product_id, SUM(quantity) AS total FROM SaleItem GROUP BY product_id;

@@ -33,6 +33,32 @@ class SqlDelightProductRepository @Inject constructor(
         return products.map { insert(it) }
     }
 
+    override suspend fun upsertAll(products: List<Product>) {
+        database.productQueries.transaction {
+            products.forEach { product ->
+                val existing = database.productQueries.selectProductById(product.id).executeAsOneOrNull()
+                if (existing == null) {
+                    database.productQueries.insertProductWithId(
+                        product.id,
+                        product.name,
+                        product.description,
+                        product.sellPrice,
+                        product.createdAt.toString(),
+                        product.updatedAt.toString()
+                    )
+                } else {
+                    database.productQueries.updateProduct(
+                        product.name,
+                        product.description,
+                        product.sellPrice,
+                        product.updatedAt.toString(),
+                        product.id
+                    )
+                }
+            }
+        }
+    }
+
     override suspend fun update(product: Product) {
         database.productQueries.updateProduct(
             product.name,
@@ -80,6 +106,11 @@ class SqlDelightProductRepository @Inject constructor(
 
     override suspend fun getCount(): Int {
         return database.productQueries.selectAllProducts().executeAsList().size
+    }
+
+    override suspend fun getSoldCounts(): Map<Long, Int> {
+        return database.productQueries.getSoldCounts().executeAsList()
+            .associate { it.product_id to (it.total ?: 0L).toInt() }
     }
 
     private fun org.banana.project.data.database.Product.toDomain(): Product {
