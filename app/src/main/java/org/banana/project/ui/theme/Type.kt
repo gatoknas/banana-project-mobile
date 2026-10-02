@@ -6,6 +6,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import org.banana.project.R
 
+// Ledger figures: tabular monospace for money/IDs, mirroring the web design
+// language's "ledger / receipt" vernacular. Uses the system monospace family
+// so no extra font asset is bundled.
+val LedgerMono = FontFamily.Monospace
+
 // Outfit is the same font family used across the web app.
 // Static weights are bundled under res/font to match the web's Tailwind weights.
 val Outfit = FontFamily(

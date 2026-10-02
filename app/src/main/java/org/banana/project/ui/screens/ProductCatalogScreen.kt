@@ -39,6 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,9 +55,13 @@ import org.banana.project.presentation.CatalogViewMode
 import org.banana.project.presentation.ProductCatalogEvent
 import org.banana.project.presentation.ProductCatalogViewModel
 import org.banana.project.ui.components.RetroCard
+import org.banana.project.ui.theme.LedgerMono
 import org.banana.project.ui.theme.muted
 import org.banana.project.ui.theme.retroOutline
+import org.banana.project.ui.theme.retroShadow
 import org.banana.project.utils.CurrencyFormatter
+
+private val GridCardHeight = 160.dp
 
 /**
  * Read-only catalog of all products with their sale price.
@@ -69,9 +77,7 @@ fun ProductCatalogScreen(
     val products = viewModel.filteredProducts
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         CatalogControlPanel(
@@ -320,38 +326,69 @@ private fun CatalogErrorBanner(
     message: String,
     onRetry: () -> Unit
 ) {
+    val shape = RoundedCornerShape(10.dp)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp))
-            .border(2.dp, MaterialTheme.colorScheme.retroOutline, RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(2.dp, MaterialTheme.colorScheme.retroOutline, shape)
             .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = message,
             modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onPrimary,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold
         )
         TextButton(onClick = onRetry) {
             Text(
                 text = "Reintentar",
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Black
             )
         }
     }
 }
 
+/**
+ * Lightweight catalog card: thin ink border, small radius, flat offset shadow.
+ * Distinct from the heavier `RetroCard` panel used for the control panel.
+ */
+@Composable
+private fun ProductCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val shape = RoundedCornerShape(14.dp)
+    val shadowColor = MaterialTheme.colorScheme.retroShadow
+    Box(
+        modifier = modifier
+            .padding(bottom = 4.dp, end = 4.dp)
+            .drawBehind {
+                drawRoundRect(
+                    color = shadowColor.copy(alpha = 0.7f),
+                    topLeft = Offset(3.dp.toPx(), 3.dp.toPx()),
+                    size = this.size,
+                    cornerRadius = CornerRadius(14.dp.toPx(), 14.dp.toPx())
+                )
+            }
+            .border(2.dp, MaterialTheme.colorScheme.retroOutline, shape)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface, shape)
+    ) {
+        content()
+    }
+}
+
 @Composable
 private fun ProductGrid(products: List<Product>) {
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 180.dp),
+        columns = GridCells.Adaptive(minSize = 150.dp),
         modifier = Modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(products, key = { it.id }) { product ->
             ProductGridCard(product)
@@ -361,21 +398,21 @@ private fun ProductGrid(products: List<Product>) {
 
 @Composable
 private fun ProductGridCard(product: Product) {
-    RetroCard(
-        modifier = Modifier.fillMaxWidth(),
-        backgroundColor = MaterialTheme.colorScheme.surface,
-        borderColor = MaterialTheme.colorScheme.primary
+    ProductCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(GridCardHeight)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            CategoryBadge(product.category)
+            CategoryChip(product.category)
             Text(
                 text = product.name,
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
@@ -384,18 +421,22 @@ private fun ProductGridCard(product: Product) {
             product.description?.takeIf { it.isNotBlank() }?.let { description ->
                 Text(
                     text = description,
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    maxLines = 2,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.muted,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = CurrencyFormatter.formatCop(product.sellPrice),
-                fontSize = 20.sp,
+                fontFamily = LedgerMono,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -405,7 +446,7 @@ private fun ProductGridCard(product: Product) {
 private fun ProductList(products: List<Product>) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         items(products, key = { it.id }) { product ->
             ProductListRow(product)
@@ -415,11 +456,7 @@ private fun ProductList(products: List<Product>) {
 
 @Composable
 private fun ProductListRow(product: Product) {
-    RetroCard(
-        modifier = Modifier.fillMaxWidth(),
-        backgroundColor = MaterialTheme.colorScheme.surface,
-        borderColor = MaterialTheme.colorScheme.primary
-    ) {
+    ProductCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -429,12 +466,12 @@ private fun ProductListRow(product: Product) {
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                CategoryBadge(product.category)
+                CategoryChip(product.category)
                 Text(
                     text = product.name,
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -443,34 +480,38 @@ private fun ProductListRow(product: Product) {
                 product.description?.takeIf { it.isNotBlank() }?.let { description ->
                     Text(
                         text = description,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        maxLines = 2,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.muted,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
             }
             Text(
                 text = CurrencyFormatter.formatCop(product.sellPrice),
-                fontSize = 18.sp,
+                fontFamily = LedgerMono,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
         }
     }
 }
 
+/**
+ * Quiet metadata chip: thin flat outline, no fill.
+ */
 @Composable
-private fun CategoryBadge(category: String) {
+private fun CategoryChip(category: String) {
     Box(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-            .border(2.dp, MaterialTheme.colorScheme.retroOutline, RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.retroOutline, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
         Text(
             text = category,
-            color = MaterialTheme.colorScheme.onPrimary,
+            color = MaterialTheme.colorScheme.muted,
             fontSize = 10.sp,
             fontWeight = FontWeight.Black,
             maxLines = 1,
@@ -485,16 +526,21 @@ private fun CatalogLoading() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.tertiary)
-            Text(
-                text = "Cargando catálogo...",
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Black
-            )
+        ProductCard(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = "Cargando catálogo...",
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black
+                )
+            }
         }
     }
 }
@@ -508,11 +554,7 @@ private fun CatalogEmpty(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        RetroCard(
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colorScheme.tertiary,
-            borderColor = MaterialTheme.colorScheme.retroOutline
-        ) {
+        ProductCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -524,7 +566,7 @@ private fun CatalogEmpty(
                     text = "No se encontraron productos",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onTertiary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
                 Text(
@@ -535,7 +577,7 @@ private fun CatalogEmpty(
                     },
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onTertiary.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.muted,
                     textAlign = TextAlign.Center
                 )
                 if (hasError) {
