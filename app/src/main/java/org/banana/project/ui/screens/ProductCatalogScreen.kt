@@ -1,12 +1,11 @@
 package org.banana.project.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,8 +28,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,6 +51,7 @@ import org.banana.project.presentation.CatalogViewMode
 import org.banana.project.presentation.ProductCatalogEvent
 import org.banana.project.presentation.ProductCatalogViewModel
 import org.banana.project.ui.components.RetroCard
+import org.banana.project.ui.theme.muted
 import org.banana.project.ui.theme.retroOutline
 import org.banana.project.utils.CurrencyFormatter
 
@@ -74,9 +74,8 @@ fun ProductCatalogScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CatalogHeader()
-
-        CatalogFilters(
+        CatalogControlPanel(
+            productCount = state.products.size,
             searchQuery = state.searchQuery,
             onSearchChange = { viewModel.onEvent(ProductCatalogEvent.UpdateSearchQuery(it)) },
             selectedCategory = state.selectedCategory,
@@ -114,37 +113,14 @@ fun ProductCatalogScreen(
     }
 }
 
+/**
+ * Single paper control panel holding the title, search, category selector and view
+ * toggle. Keeping the controls on cream (rather than floating on the emerald
+ * background) is what makes them legible.
+ */
 @Composable
-private fun CatalogHeader() {
-    RetroCard(
-        modifier = Modifier.fillMaxWidth(),
-        backgroundColor = MaterialTheme.colorScheme.primary,
-        borderColor = MaterialTheme.colorScheme.secondary
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = "CATÁLOGO DE PRODUCTOS",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-            Text(
-                text = "Consulta el precio de venta de todos los productos.",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun CatalogFilters(
+private fun CatalogControlPanel(
+    productCount: Int,
     searchQuery: String,
     onSearchChange: (String) -> Unit,
     selectedCategory: String?,
@@ -153,66 +129,124 @@ private fun CatalogFilters(
     viewMode: CatalogViewMode,
     onViewModeChange: (CatalogViewMode) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = onSearchChange,
-            label = { Text("Buscar producto") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+    RetroCard(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = MaterialTheme.colorScheme.surface,
+        borderColor = MaterialTheme.colorScheme.retroOutline
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            CategoryDropdown(
-                selectedCategory = selectedCategory,
-                categories = categories,
-                onCategorySelected = onCategorySelected,
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Catálogo de productos",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "$productCount ${if (productCount == 1) "producto" else "productos"}",
+                    color = MaterialTheme.colorScheme.muted,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1
+                )
+            }
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                label = { Text("Buscar por nombre") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.retroOutline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.muted,
+                    focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLeadingIconColor = MaterialTheme.colorScheme.muted
+                ),
+                modifier = Modifier.fillMaxWidth()
             )
 
-            ModeButton(
-                text = "Tarjetas",
-                selected = viewMode == CatalogViewMode.GRID,
-                onClick = { onViewModeChange(CatalogViewMode.GRID) }
-            )
-            ModeButton(
-                text = "Lista",
-                selected = viewMode == CatalogViewMode.LIST,
-                onClick = { onViewModeChange(CatalogViewMode.LIST) }
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CategorySelector(
+                    selectedCategory = selectedCategory,
+                    categories = categories,
+                    onCategorySelected = onCategorySelected,
+                    modifier = Modifier.weight(1f)
+                )
+
+                RetroControlButton(
+                    text = "Tarjetas",
+                    selected = viewMode == CatalogViewMode.GRID,
+                    onClick = { onViewModeChange(CatalogViewMode.GRID) }
+                )
+                RetroControlButton(
+                    text = "Lista",
+                    selected = viewMode == CatalogViewMode.LIST,
+                    onClick = { onViewModeChange(CatalogViewMode.LIST) }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun CategoryDropdown(
+private fun CategorySelector(
     selectedCategory: String?,
     categories: List<String>,
     onCategorySelected: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(10.dp)
 
     Box(modifier = modifier) {
-        OutlinedButton(
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(MaterialTheme.colorScheme.surface, shape)
+                .border(2.dp, MaterialTheme.colorScheme.retroOutline, shape)
+                .clickable { expanded = true }
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = selectedCategory ?: "Todas las categorías",
                 modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Start,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface
+            )
         }
 
         DropdownMenu(
@@ -239,32 +273,45 @@ private fun CategoryDropdown(
     }
 }
 
+/**
+ * Retro segmented control option: crimson fill when selected, cream with an ink
+ * border when not.
+ */
 @Composable
-private fun ModeButton(
+private fun RetroControlButton(
     text: String,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.height(48.dp),
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.retroOutline),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.tertiary
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
-            contentColor = if (selected) {
-                MaterialTheme.colorScheme.onTertiary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            }
-        )
+    val shape = RoundedCornerShape(10.dp)
+    val background = if (selected) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val content = if (selected) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .background(background, shape)
+            .border(2.dp, MaterialTheme.colorScheme.retroOutline, shape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(text = text, fontSize = 12.sp, fontWeight = FontWeight.Black, maxLines = 1)
+        Text(
+            text = text,
+            color = content,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Black,
+            maxLines = 1
+        )
     }
 }
 
