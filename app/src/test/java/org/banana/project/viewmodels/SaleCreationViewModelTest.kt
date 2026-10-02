@@ -11,6 +11,7 @@ import org.banana.project.data.UnitOfWork
 import org.banana.project.data.CatalogSnapshot
 import org.banana.project.data.CatalogSyncer
 import org.banana.project.data.repository.ProductRepository
+import org.banana.project.domain.usecase.GetProductCatalogUseCase
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
 import org.banana.project.model.ParsedSaleItem
 import org.banana.project.model.Product
@@ -30,6 +31,12 @@ import java.time.Instant
 class SaleCreationViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+
+    private sealed interface Step {
+        data class Parse(val text: String) : Step
+        data class Pick(val parsedName: String, val product: Product) : Step
+        data class Clear(val parsedName: String) : Step
+    }
 
     class MockProductRepository : ProductRepository {
         var dbProducts: List<Product> = emptyList()
@@ -97,7 +104,12 @@ class SaleCreationViewModelTest {
         }
         mockSaleService = MockSaleService()
         parseAndMatchSpeechUseCase = ParseAndMatchSpeechUseCase(mockProductRepository)
-        viewModel = SaleCreationViewModel(mockSaleService, parseAndMatchSpeechUseCase, fakeCatalogSyncer)
+        viewModel = SaleCreationViewModel(
+            mockSaleService,
+            parseAndMatchSpeechUseCase,
+            fakeCatalogSyncer,
+            GetProductCatalogUseCase(mockProductRepository)
+        )
     }
 
     @After
@@ -190,7 +202,12 @@ class SaleCreationViewModelTest {
 
         testCases.forEach { tc ->
             // Re-instantiate ViewModel to clean up internal state
-            viewModel = SaleCreationViewModel(mockSaleService, parseAndMatchSpeechUseCase, fakeCatalogSyncer)
+            viewModel = SaleCreationViewModel(
+                mockSaleService,
+                parseAndMatchSpeechUseCase,
+                fakeCatalogSyncer,
+                GetProductCatalogUseCase(mockProductRepository)
+            )
             mockSaleService.capturedSale = null
             mockSaleService.capturedItems = null
 
@@ -222,6 +239,116 @@ class SaleCreationViewModelTest {
                 assertNotNull("Failed scenario: ${tc.name} (createSale should be called)", mockSaleService.capturedSale)
                 assertEquals("Failed scenario: ${tc.name} (total amount validation)", tc.expectedTotalAmount, mockSaleService.capturedSale!!.totalAmount, 0.001)
             }
+        }
+    }
+
+    @Test
+    fun `product picker selection TDT scenarios`() {
+        data class ExpectedItem(
+            val parsedName: String,
+            val quantity: Int,
+            val matchedProductId: Long?
+        )
+
+        data class TestCase(
+            val name: String,
+            val steps: List<Step>,
+            val expectedItems: List<ExpectedItem>,
+            val expectedMergedKey: String?,
+            val expectedCatalogSize: Int
+        )
+
+        val testCases = listOf(
+            TestCase(
+                name = "Selecting a product on an unmatched line sets the match",
+                steps = listOf(
+                    Step.Parse("1 pera"),
+                    Step.Pick("pera", appleProduct)
+                ),
+                expectedItems = listOf(ExpectedItem("pera", 1, 1L)),
+                expectedMergedKey = null,
+                expectedCatalogSize = 2
+            ),
+            TestCase(
+                name = "Selecting a product already in the list merges quantities",
+                steps = listOf(
+                    Step.Parse("1 manzana"),
+                    Step.Parse("1 pera"),
+                    Step.Pick("pera", appleProduct)
+                ),
+                expectedItems = listOf(ExpectedItem("manzana", 2, 1L)),
+                expectedMergedKey = "product_1",
+                expectedCatalogSize = 2
+            ),
+            TestCase(
+                name = "Clearing a match removes the product from the line",
+                steps = listOf(
+                    Step.Parse("1 manzana"),
+                    Step.Clear("manzana")
+                ),
+                expectedItems = listOf(ExpectedItem("manzana", 1, null)),
+                expectedMergedKey = null,
+                expectedCatalogSize = 2
+            ),
+            TestCase(
+                name = "Catalog is exposed to the picker",
+                steps = emptyList(),
+                expectedItems = emptyList(),
+                expectedMergedKey = null,
+                expectedCatalogSize = 2
+            )
+        )
+
+        testCases.forEach { tc ->
+            mockProductRepository.dbProducts = listOf(appleProduct, bananaProduct)
+            viewModel = SaleCreationViewModel(
+                mockSaleService,
+                parseAndMatchSpeechUseCase,
+                fakeCatalogSyncer,
+                GetProductCatalogUseCase(mockProductRepository)
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            tc.steps.forEach { step ->
+                when (step) {
+                    is Step.Parse ->
+                        viewModel.onEvent(SaleCreationEvent.ParseSpeech(listOf(step.text)))
+
+                    is Step.Pick -> {
+                        val item = viewModel.parsedItems.value.firstOrNull { it.parsedName == step.parsedName }
+                        assertNotNull("Failed scenario: ${tc.name} (target item for pick)", item)
+                        viewModel.onEvent(SaleCreationEvent.SelectProduct(item!!, step.product))
+                    }
+
+                    is Step.Clear -> {
+                        val item = viewModel.parsedItems.value.firstOrNull { it.parsedName == step.parsedName }
+                        assertNotNull("Failed scenario: ${tc.name} (target item for clear)", item)
+                        viewModel.onEvent(SaleCreationEvent.ClearProductMatch(item!!))
+                    }
+                }
+                testDispatcher.scheduler.advanceUntilIdle()
+            }
+
+            val actualItems = viewModel.parsedItems.value
+                .map { ExpectedItem(it.parsedName, it.quantity, it.matchedProduct?.id) }
+                .sortedBy { it.parsedName }
+
+            assertEquals(
+                "Failed scenario: ${tc.name} (items)",
+                tc.expectedItems.sortedBy { it.parsedName },
+                actualItems
+            )
+            if (tc.expectedMergedKey != null) {
+                assertTrue(
+                    "Failed scenario: ${tc.name} (merged key present)",
+                    viewModel.mergedItemKeys.value.contains(tc.expectedMergedKey)
+                )
+            }
+            assertEquals(
+                "Failed scenario: ${tc.name} (catalog size)",
+                tc.expectedCatalogSize,
+                viewModel.catalog.value.size
+            )
         }
     }
 }
