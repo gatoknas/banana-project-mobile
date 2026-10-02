@@ -47,7 +47,7 @@ fun RetroHeader(
     user: User?,
     onLogout: () -> Unit,
     onDashboardClick: () -> Unit,
-    onCreateProductClick: () -> Unit,
+    onProductsClick: () -> Unit,
     onSellCreationClick: () -> Unit
 ) {
     RetroCard(
@@ -74,7 +74,7 @@ fun RetroHeader(
                 activeScreen = activeScreen,
                 modifier = Modifier.weight(1f),
                 onDashboardClick = onDashboardClick,
-                onCreateProductClick = onCreateProductClick,
+                onProductsClick = onProductsClick,
                 onSellCreationClick = onSellCreationClick
             )
 
@@ -165,7 +165,7 @@ fun RetroHeaderPreview() {
         ),
         onLogout = {},
         onDashboardClick = {},
-        onCreateProductClick = {},
+        onProductsClick = {},
         onSellCreationClick = {}
     )
 }

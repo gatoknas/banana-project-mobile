@@ -23,8 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
-import org.banana.project.navigation.CreateProductScreen
 import org.banana.project.navigation.DashboardScreen
+import org.banana.project.navigation.ProductCatalogScreen
 import org.banana.project.navigation.SaleCreationScreen
 import org.banana.project.ui.theme.retroOutline
 import org.banana.project.ui.theme.retroShadow
@@ -90,11 +90,11 @@ fun HeaderMenu(
     activeScreen: Screen?,
     modifier: Modifier = Modifier,
     onDashboardClick: () -> Unit,
-    onCreateProductClick: () -> Unit,
+    onProductsClick: () -> Unit,
     onSellCreationClick: () -> Unit
 ){
     val isSellActive = activeScreen is SaleCreationScreen
-    val isProductsActive = activeScreen is CreateProductScreen
+    val isProductsActive = activeScreen is ProductCatalogScreen
     val isDashboardActive = activeScreen is DashboardScreen
 
     Row(
@@ -112,7 +112,7 @@ fun HeaderMenu(
         RetroMenuItem(
             text = "Productos",
             isActive = isProductsActive,
-            onClick = onCreateProductClick
+            onClick = onProductsClick
         )
         RetroMenuItem(
             text = "Indicadores",
