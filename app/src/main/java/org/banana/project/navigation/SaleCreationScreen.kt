@@ -29,6 +29,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -200,6 +201,7 @@ class SaleCreationScreen() : Screen {
             }
             val itemCount = parsedItems.size
             val hasUnmatched = viewModel.hasUnmatchedItems
+            var selectedPaymentMethod by remember { mutableStateOf("Cash") }
 
             AlertDialog(
                 onDismissRequest = { showConfirmDialog = false },
@@ -244,6 +246,26 @@ class SaleCreationScreen() : Screen {
                                 fontSize = 18.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "Método de pago",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf(
+                                    "Efectivo" to "Cash",
+                                    "Tarjeta" to "Card",
+                                    "Transferencia" to "Transfer"
+                                ).forEach { (label, value) ->
+                                    FilterChip(
+                                        selected = selectedPaymentMethod == value,
+                                        onClick = { selectedPaymentMethod = value },
+                                        label = { Text(label, fontSize = 12.sp) }
+                                    )
+                                }
+                            }
                         }
                     }
                 },
@@ -252,7 +274,7 @@ class SaleCreationScreen() : Screen {
                         Button(
                             onClick = {
                                 showConfirmDialog = false
-                                viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SubmitSale("Cash"))
+                                viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SubmitSale(selectedPaymentMethod))
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.secondary,
