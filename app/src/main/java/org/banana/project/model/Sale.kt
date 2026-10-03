@@ -33,7 +33,8 @@ data class Sale(
     val id: Long,
     val items: List<SaleItem>,
     val totalAmount: Double,
-    val dateTime: Instant
+    val dateTime: Instant,
+    val pendingSync: Boolean = false
 ) {
     /**
      * Calculates the total amount by summing the quantity of each SaleItem multiplied by the product's sell price.

@@ -20,7 +20,8 @@ class SqlDelightSaleRepository @Inject constructor(
     override suspend fun insert(sale: Sale): Long {
         database.productQueries.insertSale(
             sale.totalAmount,
-            sale.dateTime.toString()
+            sale.dateTime.toString(),
+            if (sale.pendingSync) 1L else 0L
         )
         return database.productQueries.lastInsertRowId().executeAsOne()
     }
@@ -29,7 +30,8 @@ class SqlDelightSaleRepository @Inject constructor(
         return database.productQueries.transactionWithResult {
             database.productQueries.insertSale(
                 sale.totalAmount,
-                sale.dateTime.toString()
+                sale.dateTime.toString(),
+                if (sale.pendingSync) 1L else 0L
             )
             val saleId = database.productQueries.lastInsertRowId().executeAsOne()
             
@@ -112,7 +114,8 @@ class SqlDelightSaleRepository @Inject constructor(
             id = this.id,
             items = emptyList(),
             totalAmount = this.total,
-            dateTime = java.time.Instant.parse(this.created_at)
+            dateTime = java.time.Instant.parse(this.created_at),
+            pendingSync = this.pending_sync != 0L
         )
     }
 

@@ -100,6 +100,13 @@ class SaleCreationScreen() : Screen {
                     )
                     viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearSubmitResult)
                 }
+                is SaleCreationViewModel.SubmitResult.SavedOffline -> {
+                    snackbarHostState.showSnackbar(
+                        message = "Venta guardada localmente; se sincronizará cuando haya conexión.",
+                        duration = SnackbarDuration.Long
+                    )
+                    viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.ClearSubmitResult)
+                }
                 is SaleCreationViewModel.SubmitResult.Error -> {
                     snackbarHostState.showSnackbar(
                         message = result.message,
@@ -245,7 +252,7 @@ class SaleCreationScreen() : Screen {
                         Button(
                             onClick = {
                                 showConfirmDialog = false
-                                viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SubmitSale)
+                                viewModel.onEvent(SaleCreationViewModel.SaleCreationEvent.SubmitSale("Cash"))
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.secondary,

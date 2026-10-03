@@ -10,20 +10,21 @@ import kotlinx.coroutines.launch
 import org.banana.project.data.CatalogSyncer
 import org.banana.project.domain.usecase.GetProductCatalogUseCase
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
+import org.banana.project.domain.usecase.RegisterSaleResult
+import org.banana.project.domain.usecase.RegisterSaleUseCase
 import org.banana.project.model.ParsedSaleItem
 import org.banana.project.model.Product
 import org.banana.project.model.Sale
 import org.banana.project.model.SaleItem
-import org.banana.project.services.SaleService
 import java.time.Instant
 import javax.inject.Inject
 
 @HiltViewModel
 class SaleCreationViewModel @Inject constructor(
-    private val saleService: SaleService,
     private val parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase,
     private val catalogSyncer: CatalogSyncer,
-    private val getProductCatalogUseCase: GetProductCatalogUseCase
+    private val getProductCatalogUseCase: GetProductCatalogUseCase,
+    private val registerSaleUseCase: RegisterSaleUseCase
 ) : ViewModel() {
 
     private val _catalog = MutableStateFlow<List<Product>>(emptyList())
@@ -56,6 +57,7 @@ class SaleCreationViewModel @Inject constructor(
 
     sealed class SubmitResult {
         data class Success(val saleId: Long) : SubmitResult()
+        data class SavedOffline(val localSaleId: Long) : SubmitResult()
         data class Error(val message: String) : SubmitResult()
     }
 
@@ -65,7 +67,7 @@ class SaleCreationViewModel @Inject constructor(
         data class UpdateItemQuantity(val item: ParsedSaleItem, val newQuantity: Int) : SaleCreationEvent()
         data class SelectProduct(val item: ParsedSaleItem, val product: Product) : SaleCreationEvent()
         data class ClearProductMatch(val item: ParsedSaleItem) : SaleCreationEvent()
-        object SubmitSale : SaleCreationEvent()
+        data class SubmitSale(val paymentMethod: String) : SaleCreationEvent()
         object ClearSubmitResult : SaleCreationEvent()
         object ClearItems : SaleCreationEvent()
         object ClearMergedKeys : SaleCreationEvent()
@@ -95,7 +97,7 @@ class SaleCreationViewModel @Inject constructor(
             is SaleCreationEvent.UpdateItemQuantity -> updateItemQuantity(event.item, event.newQuantity)
             is SaleCreationEvent.SelectProduct -> selectProduct(event.item, event.product)
             is SaleCreationEvent.ClearProductMatch -> clearProductMatch(event.item)
-            is SaleCreationEvent.SubmitSale -> submitSale()
+            is SaleCreationEvent.SubmitSale -> submitSale(event.paymentMethod)
             is SaleCreationEvent.ClearSubmitResult -> clearSubmitResult()
             is SaleCreationEvent.ClearItems -> clearItems()
             is SaleCreationEvent.ClearMergedKeys -> clearMergedKeys()
@@ -141,7 +143,7 @@ class SaleCreationViewModel @Inject constructor(
         }
     }
 
-    private fun submitSale() {
+    private fun submitSale(paymentMethod: String) {
         val currentItems = _parsedItems.value
         if (currentItems.isEmpty()) return
 
@@ -174,11 +176,14 @@ class SaleCreationViewModel @Inject constructor(
                 dateTime = Instant.now()
             )
 
-            val result = saleService.createSale(sale, saleItems)
+            val result = registerSaleUseCase(sale, saleItems, paymentMethod)
 
             result.fold(
-                onSuccess = { saleId ->
-                    _submitResult.value = SubmitResult.Success(saleId)
+                onSuccess = { outcome ->
+                    _submitResult.value = when (outcome) {
+                        is RegisterSaleResult.Synced -> SubmitResult.Success(outcome.saleId)
+                        is RegisterSaleResult.SavedOffline -> SubmitResult.SavedOffline(outcome.localSaleId)
+                    }
                     _parsedItems.value = emptyList()
                     _mergedItemKeys.value = emptySet()
                 },
