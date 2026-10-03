@@ -9,6 +9,8 @@ import org.banana.project.data.network.models.LoginRequest
 import org.banana.project.data.network.models.LoginResponse
 import org.banana.project.data.network.models.ProductDto
 import org.banana.project.data.network.models.RefreshRequest
+import org.banana.project.data.network.models.SaleRequestDto
+import org.banana.project.data.network.models.SaleResponseDto
 import org.banana.project.data.repository.ProductRepository
 import org.banana.project.model.Product
 import org.junit.Assert.assertEquals
@@ -36,6 +38,9 @@ class ProductCatalogSyncTest {
         }
 
         override suspend fun getCategories(): List<CategoryDto> = categories
+
+        override suspend fun createSale(request: SaleRequestDto): SaleResponseDto =
+            SaleResponseDto(status = "success", message = "ok", saleId = 1L)
     }
 
     private class FakeProductRepository : ProductRepository {

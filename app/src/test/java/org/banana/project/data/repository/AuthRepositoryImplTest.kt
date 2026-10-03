@@ -8,6 +8,8 @@ import org.banana.project.data.network.models.LoginRequest
 import org.banana.project.data.network.models.LoginResponse
 import org.banana.project.data.network.models.ProductDto
 import org.banana.project.data.network.models.RefreshRequest
+import org.banana.project.data.network.models.SaleRequestDto
+import org.banana.project.data.network.models.SaleResponseDto
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import retrofit2.Call
@@ -30,6 +32,9 @@ class AuthRepositoryImplTest {
         override suspend fun getProducts(): List<ProductDto> = emptyList()
 
         override suspend fun getCategories(): List<CategoryDto> = emptyList()
+
+        override suspend fun createSale(request: SaleRequestDto): SaleResponseDto =
+            SaleResponseDto(status = "success", message = "ok", saleId = 1L)
     }
 
     private class FakeSharedPreferences : SharedPreferences {
