@@ -10,13 +10,18 @@ import kotlinx.coroutines.test.setMain
 import org.banana.project.data.UnitOfWork
 import org.banana.project.data.CatalogSnapshot
 import org.banana.project.data.CatalogSyncer
+import org.banana.project.data.network.models.SaleRequestDto
+import org.banana.project.data.repository.AuthRepository
 import org.banana.project.data.repository.ProductRepository
+import org.banana.project.data.repository.SaleRemoteRepository
 import org.banana.project.domain.usecase.GetProductCatalogUseCase
 import org.banana.project.domain.usecase.ParseAndMatchSpeechUseCase
+import org.banana.project.domain.usecase.RegisterSaleUseCase
 import org.banana.project.model.ParsedSaleItem
 import org.banana.project.model.Product
 import org.banana.project.model.Sale
 import org.banana.project.model.SaleItem
+import org.banana.project.model.User
 import org.banana.project.services.SaleService
 import org.banana.project.viewmodels.SaleCreationViewModel.SaleCreationEvent
 import org.junit.After
@@ -83,8 +88,24 @@ class SaleCreationViewModelTest {
         override suspend fun calculateTotalAmount(sale: Sale, items: List<SaleItem>): Result<Double> = Result.success(0.0)
     }
 
+    class MockSaleRemoteRepository : SaleRemoteRepository {
+        var createSaleResult: Result<Long> = Result.success(1L)
+        override suspend fun createSale(request: SaleRequestDto): Result<Long> = createSaleResult
+    }
+
+    class MockAuthRepository : AuthRepository {
+        var user: User? = User("1", "cashier", "Cajero", "Vendedor")
+        override suspend fun login(username: String, password: String): Result<Unit> = Result.success(Unit)
+        override fun logout() {}
+        override fun getAccessToken(): String? = null
+        override fun getRefreshToken(): String? = null
+        override fun getCurrentUser(): User? = user
+    }
+
     private lateinit var mockProductRepository: MockProductRepository
     private lateinit var mockSaleService: MockSaleService
+    private lateinit var mockSaleRemoteRepository: MockSaleRemoteRepository
+    private lateinit var mockAuthRepository: MockAuthRepository
     private lateinit var parseAndMatchSpeechUseCase: ParseAndMatchSpeechUseCase
     private lateinit var viewModel: SaleCreationViewModel
 
@@ -103,12 +124,14 @@ class SaleCreationViewModelTest {
             dbProducts = listOf(appleProduct, bananaProduct)
         }
         mockSaleService = MockSaleService()
+        mockSaleRemoteRepository = MockSaleRemoteRepository()
+        mockAuthRepository = MockAuthRepository()
         parseAndMatchSpeechUseCase = ParseAndMatchSpeechUseCase(mockProductRepository)
         viewModel = SaleCreationViewModel(
-            mockSaleService,
             parseAndMatchSpeechUseCase,
             fakeCatalogSyncer,
-            GetProductCatalogUseCase(mockProductRepository)
+            GetProductCatalogUseCase(mockProductRepository),
+            RegisterSaleUseCase(mockSaleRemoteRepository, mockSaleService, mockAuthRepository)
         )
     }
 
@@ -178,7 +201,7 @@ class SaleCreationViewModelTest {
                 name = "Submit sale successfully with matched items",
                 eventsToDispatch = listOf(
                     SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("2 manzanas")),
-                    SaleCreationViewModel.SaleCreationEvent.SubmitSale
+                    SaleCreationViewModel.SaleCreationEvent.SubmitSale("Cash")
                 ),
                 expectedParsedItemsSize = 0, // Cleared after success
                 expectedMergedKeysSize = 0, // Cleared after success
@@ -190,7 +213,7 @@ class SaleCreationViewModelTest {
                 name = "Fail to submit sale when there is an unmatched item",
                 eventsToDispatch = listOf(
                     SaleCreationViewModel.SaleCreationEvent.ParseSpeech(listOf("5 exóticos")),
-                    SaleCreationViewModel.SaleCreationEvent.SubmitSale
+                    SaleCreationViewModel.SaleCreationEvent.SubmitSale("Cash")
                 ),
                 expectedParsedItemsSize = 1, // Not cleared on error
                 expectedMergedKeysSize = 0, // No merge key for unmatched
@@ -203,10 +226,10 @@ class SaleCreationViewModelTest {
         testCases.forEach { tc ->
             // Re-instantiate ViewModel to clean up internal state
             viewModel = SaleCreationViewModel(
-                mockSaleService,
                 parseAndMatchSpeechUseCase,
                 fakeCatalogSyncer,
-                GetProductCatalogUseCase(mockProductRepository)
+                GetProductCatalogUseCase(mockProductRepository),
+                RegisterSaleUseCase(mockSaleRemoteRepository, mockSaleService, mockAuthRepository)
             )
             mockSaleService.capturedSale = null
             mockSaleService.capturedItems = null
@@ -302,10 +325,10 @@ class SaleCreationViewModelTest {
         testCases.forEach { tc ->
             mockProductRepository.dbProducts = listOf(appleProduct, bananaProduct)
             viewModel = SaleCreationViewModel(
-                mockSaleService,
                 parseAndMatchSpeechUseCase,
                 fakeCatalogSyncer,
-                GetProductCatalogUseCase(mockProductRepository)
+                GetProductCatalogUseCase(mockProductRepository),
+                RegisterSaleUseCase(mockSaleRemoteRepository, mockSaleService, mockAuthRepository)
             )
             testDispatcher.scheduler.advanceUntilIdle()
 

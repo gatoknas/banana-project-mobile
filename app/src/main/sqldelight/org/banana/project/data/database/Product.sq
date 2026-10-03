@@ -12,7 +12,8 @@ CREATE TABLE Product (
 CREATE TABLE Sale (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     total REAL NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    pending_sync INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE SaleItem (
@@ -57,7 +58,7 @@ selectSaleById:
 SELECT * FROM Sale WHERE id = ?;
 
 insertSale:
-INSERT INTO Sale(total, created_at) VALUES (?, ?);
+INSERT INTO Sale(total, created_at, pending_sync) VALUES (?, ?, ?);
 
 getTotalAmountByDateRange:
 SELECT SUM(total) FROM Sale WHERE created_at >= ? AND created_at <= ?;

@@ -12,7 +12,10 @@ import org.banana.project.data.UnitOfWork
 import org.banana.project.data.CatalogSyncer
 import org.banana.project.data.ProductCatalogSync
 import org.banana.project.data.database.BananaDatabase
+import org.banana.project.data.network.BananaApi
 import org.banana.project.data.repository.ProductRepository
+import org.banana.project.data.repository.SaleRemoteRepository
+import org.banana.project.data.repository.SaleRemoteRepositoryImpl
 import org.banana.project.data.repository.SaleRepository
 import org.banana.project.services.ProductService
 import org.banana.project.services.SaleService
@@ -82,5 +85,11 @@ object DatabaseModule {
     @Singleton
     fun provideCatalogSyncer(productCatalogSync: ProductCatalogSync): CatalogSyncer {
         return productCatalogSync
+    }
+
+    @Provides
+    @Singleton
+    fun provideSaleRemoteRepository(api: BananaApi): SaleRemoteRepository {
+        return SaleRemoteRepositoryImpl(api)
     }
 }
