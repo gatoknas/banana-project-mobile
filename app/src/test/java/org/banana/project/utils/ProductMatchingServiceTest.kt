@@ -143,4 +143,48 @@ class ProductMatchingServiceTest {
         )
         assertNull("Short token should not substring-match a longer product", substringMiss.first().matchedProduct)
     }
+
+    @Test
+    fun `plural de-pluralization TDT scenarios`() {
+        val pluralProducts = listOf(
+            Product(1L, "Jugo de Naranja", "Jugo natural", 1.0, Instant.now(), Instant.now()),
+            Product(2L, "Sanduche de Pollo", "Sanduche", 1.0, Instant.now(), Instant.now()),
+            Product(3L, "Manzana", "Manzana roja", 1.0, Instant.now(), Instant.now()),
+            Product(4L, "Limón", "Limón verde", 1.0, Instant.now(), Instant.now()),
+            Product(5L, "Lápiz", "Lápiz negro", 1.0, Instant.now(), Instant.now()),
+            Product(6L, "Salpicon", "Salpicon de frutas", 1.0, Instant.now(), Instant.now())
+        )
+
+        data class TestCase(
+            val name: String,
+            val target: String,
+            val expectedProductId: Long?
+        )
+
+        val testCases = listOf(
+            TestCase("Plural multi-word jugos de naranja -> Jugo de Naranja", "jugos de naranja", 1L),
+            TestCase("Plural multi-word sanduches de pollo -> Sanduche de Pollo", "sanduches de pollo", 2L),
+            TestCase("Plural single word jugos -> Jugo de Naranja", "jugos", 1L),
+            TestCase("Plural single word sanduches -> Sanduche de Pollo", "sanduches", 2L),
+            TestCase("Singular jugo de naranja -> Jugo de Naranja", "jugo de naranja", 1L),
+            TestCase("Plural manzanas -> Manzana", "manzanas", 3L),
+            TestCase("Plural limones -> Limón", "limones", 4L),
+            TestCase("Plural lapices (accent) -> Lápiz", "lapices", 5L),
+            TestCase("Short token sal does not match Salpicon", "sal", null)
+        )
+
+        testCases.forEach { tc ->
+            val actual = ProductMatchingService.matchParsedItemsToProducts(
+                listOf(ParsedItem(1, tc.target)),
+                pluralProducts
+            ).first()
+            val matched = actual.matchedProduct
+            if (tc.expectedProductId != null) {
+                assertNotNull("Failed scenario: ${tc.name} (should match)", matched)
+                assertEquals("Failed scenario: ${tc.name} (product)", tc.expectedProductId, matched!!.id)
+            } else {
+                assertNull("Failed scenario: ${tc.name} (should not match)", matched)
+            }
+        }
+    }
 }

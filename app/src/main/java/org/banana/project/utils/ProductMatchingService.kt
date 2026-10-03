@@ -7,8 +7,6 @@ import kotlin.math.min
 
 object ProductMatchingService {
 
-    private val vowels = setOf('a', 'e', 'i', 'o', 'u')
-
     /**
      * Matches a list of ParsedItems to the closest corresponding Products from the database.
      * Uses accent folding, tokenized scoring and an optional popularity (sold count) tie-breaker.
@@ -85,30 +83,24 @@ object ProductMatchingService {
         return SpanishTextNormalizer.normalize(name)
             .split(" ")
             .filter { it.isNotBlank() }
-            .map { singularize(it) }
     }
 
     /**
-     * Applies basic Spanish morphology rules to strip common plural endings
-     * (e.g. "s", "es", "ces" -> "z") down to a singular semantic stem.
+     * Candidate singular stems for a normalized token. Spanish plurals are formed by
+     * adding "-s" (after a vowel) or "-es" (after a consonant), and "-z" becomes "-ces"
+     * (e.g. "lápiz" -> "lápices"). Returning a small candidate set and taking the
+     * minimum edit distance keeps comparison symmetric: "sanduches" and "sanduche"
+     * both reduce to a shared candidate instead of one being over-stripped to
+     * "sanduch".
      */
-    private fun singularize(token: String): String {
-        if (token.length <= 3) return token
+    private fun stems(token: String): Set<String> {
+        if (token.length <= 3) return setOf(token)
 
-        return when {
-            token.endsWith("ces") -> token.dropLast(3) + "z"
-            token.endsWith("es") && isConsonant(token[token.length - 3]) -> token.dropLast(2)
-            token.endsWith("s") && isVowel(token[token.length - 2]) -> token.dropLast(1)
-            else -> token
-        }
-    }
-
-    private fun isConsonant(c: Char): Boolean {
-        return c.isLetter() && !isVowel(c)
-    }
-
-    private fun isVowel(c: Char): Boolean {
-        return c in vowels
+        val candidates = linkedSetOf(token)
+        if (token.endsWith("ces")) candidates.add(token.dropLast(3) + "z")
+        if (token.endsWith("es")) candidates.add(token.dropLast(2))
+        if (token.endsWith("s")) candidates.add(token.dropLast(1))
+        return candidates
     }
 
     private fun tokenDistance(target: List<String>, product: List<String>): Double {
@@ -120,10 +112,24 @@ object ProductMatchingService {
 
         var total = 0.0
         for (tt in target) {
-            total += product.minOf { editDistance(tt, it).toDouble() }
+            total += product.minOf { stemDistance(tt, it) }
         }
         total += abs(target.size - product.size) * 0.5
         return total
+    }
+
+    /**
+     * Minimum edit distance across the candidate stems of both tokens.
+     */
+    private fun stemDistance(target: String, product: String): Double {
+        var best = editDistance(target, product).toDouble()
+        for (targetStem in stems(target)) {
+            for (productStem in stems(product)) {
+                val distance = editDistance(targetStem, productStem).toDouble()
+                if (distance < best) best = distance
+            }
+        }
+        return best
     }
 
     private fun isSubsequence(a: List<String>, b: List<String>): Boolean {
