@@ -141,6 +141,7 @@ class SaleCreationScreen() : Screen {
                         SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No se detectó voz, intenta de nuevo"
                         SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Falta permiso de micrófono"
                         SpeechRecognizer.ERROR_NETWORK -> "Error de red en el reconocimiento"
+                        SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED -> "Paquete de voz sin conexión no encontrado"
                         else -> "Error de reconocimiento: $error"
                     }
                     isRecording = false
@@ -161,7 +162,11 @@ class SaleCreationScreen() : Screen {
                 }
                 override fun onEvent(eventType: Int, params: Bundle?) {}
             }
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+            speechRecognizer = (if (SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
+                SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
+            } else {
+                SpeechRecognizer.createSpeechRecognizer(context)
+            }).apply {
                 setRecognitionListener(listener)
             }
 
@@ -173,9 +178,9 @@ class SaleCreationScreen() : Screen {
         val speechIntent = remember {
             Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-CO")
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-CO")
-                putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-ES")
+                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                 putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
             }
